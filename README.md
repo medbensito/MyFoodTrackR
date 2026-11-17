@@ -1,5 +1,7 @@
 # MyFoodTrackR
 
+Design : direction A « Nuit athlétique » (fond noir, citron #C8F560, Barlow Condensed + Inter embarquées pour le hors-ligne).
+
 PWA personnelle de nutrition : planning de la semaine, recettes avec macros, tracker de protéines. Tout est stocké localement sur l'appareil (IndexedDB).
 
 ## État : v1.0.0 — jalon M4 terminé

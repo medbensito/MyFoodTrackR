@@ -98,19 +98,19 @@ export function BackupCard({ lastExportAt }: { lastExportAt?: number }) {
           </p>
           <p className="small warn">Toutes tes données actuelles seront remplacées par celles de ce fichier.</p>
           <div className="danger-actions">
-            <button className="secondary" onClick={() => setPending(null)} disabled={busy}>Annuler</button>
-            <button className="danger" onClick={confirmImport} disabled={busy}>Remplacer mes données</button>
+            <button className="btn btn--sm" onClick={() => setPending(null)} disabled={busy}>Annuler</button>
+            <button className="btn btn--danger btn--sm" onClick={confirmImport} disabled={busy}>Remplacer</button>
           </div>
         </div>
       ) : (
         <div className="backup-actions">
-          <button className="primary" onClick={doExport} disabled={busy}>Exporter</button>
-          <button className="secondary" onClick={() => fileRef.current?.click()} disabled={busy}>Importer…</button>
+          <button className="btn btn--lime" onClick={doExport} disabled={busy}>Exporter</button>
+          <button className="btn" onClick={() => fileRef.current?.click()} disabled={busy}>Importer…</button>
           <input ref={fileRef} type="file" accept="application/json,.json" hidden
             onChange={(e) => { onFile(e.target.files?.[0]); e.target.value = '' }} />
         </div>
       )}
-      {message && <p className={`small ${message.tone === 'ok' ? 'ok' : 'error'}`} role="status">{message.text}</p>}
+      {message && <p className={`small ${message.tone === 'ok' ? 'ok' : 'error'}`} role="status" style={{ marginTop: 10 }}>{message.text}</p>}
     </div>
   )
 }

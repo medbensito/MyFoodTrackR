@@ -3,7 +3,7 @@ import { useFoods } from '../db/hooks'
 import { useNav } from '../nav'
 import type { Food } from '../types'
 import { CATEGORY_LABEL, normalize } from '../lib/nutrition'
-import { RoundButton, ScreenHeader } from '../components/ScreenHeader'
+import { ScreenHeader, SquareButton } from '../components/ScreenHeader'
 import { CheckCircleIcon, ChevronIcon, PlusIcon } from '../components/icons'
 
 type Filter = 'all' | 'todo' | 'verified' | 'custom'
@@ -34,28 +34,32 @@ export function FoodsScreen() {
 
   const verified = foods?.filter((f) => f.verified).length ?? 0
 
+  const total = foods?.length ?? 0
+  const create = () => nav.push({ type: 'food', id: null })
+
   return (
     <>
       <ScreenHeader
         title="Aliments"
-        subtitle="Valeurs nutritionnelles pour 100 g"
+        subtitle="Valeurs pour 100 g"
         back={nav.pop}
-        action={<RoundButton label="Ajouter un aliment" onClick={() => nav.push({ type: 'food', id: null })}><PlusIcon size={22} /></RoundButton>}
+        backAction={<SquareButton label="Ajouter un aliment" onClick={create}><PlusIcon size={20} /></SquareButton>}
       >
-        <div className="hero-card">
-          <div className="hero-card-label">Vérifiés</div>
-          <div className="hero-card-value">{verified}<small> / {foods?.length ?? '…'}</small></div>
-          <div className="hero-progress">
-            <div className="hero-progress-track">
-              <div className="hero-progress-fill" style={{ width: `${foods?.length ? Math.max(2, (verified / foods.length) * 100) : 0}%` }} />
-            </div>
+        <div className="stat" style={{ gap: 10 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+            <span className="caps">Valeurs vérifiées</span>
+            <span className="stat-val">{verified}<small> /{total}</small></span>
           </div>
-          <p className="hero-hint">Compare chaque aliment avec Ciqual ou l'étiquette, puis marque-le comme vérifié.</p>
+          <div className="segments" aria-hidden>
+            {Array.from({ length: 14 }, (_, i) => {
+              const filled = total ? (verified / total) * 14 : 0
+              const part = Math.max(0, Math.min(1, filled - i))
+              return <span key={i} style={part > 0 ? { background: `linear-gradient(90deg, var(--lime) ${part * 100}%, var(--line) ${part * 100}%)` } : undefined} />
+            })}
+          </div>
+          <span className="small muted">Compare avec Ciqual ou l'étiquette, puis marque l'aliment comme vérifié.</span>
         </div>
-      </ScreenHeader>
-
-      <section className="screen">
-        <input className="search-input search-input--page" type="search" placeholder="Rechercher un aliment"
+        <input className="search" style={{ marginTop: 14 }} type="search" placeholder="Rechercher un aliment" aria-label="Rechercher un aliment"
           value={query} onChange={(e) => setQuery(e.target.value)} />
         <div className="chips" role="tablist" aria-label="Filtrer les aliments">
           {FILTERS.map((f) => (
@@ -65,36 +69,37 @@ export function FoodsScreen() {
             </button>
           ))}
         </div>
+      </ScreenHeader>
 
+      <section className="screen">
         {groups?.length === 0 && (
-          <div className="card empty">
+          <div className="card empty" style={{ marginTop: 16 }}>
             <h2>Aucun aliment</h2>
-            <p className="muted">{filter === 'custom' ? 'Tu n\'as pas encore ajouté d\'aliment.' : 'Rien ne correspond à ta recherche.'}</p>
-            <button className="secondary" onClick={() => nav.push({ type: 'food', id: null })}>Ajouter un aliment</button>
+            <p>{filter === 'custom' ? "Tu n'as pas encore ajouté d'aliment." : 'Rien ne correspond à ta recherche.'}</p>
+            <button className="btn btn--outline btn--sm" onClick={create}><PlusIcon /> Ajouter un aliment</button>
           </div>
         )}
 
         {groups?.map(([cat, list]) => (
           <div key={cat} className="picker-group">
-            <h3>{CATEGORY_LABEL[cat] ?? cat} <span className="muted">· {list.length}</span></h3>
-            <ul className="card picker-list">
+            <h3>{CATEGORY_LABEL[cat] ?? cat} · {list.length}</h3>
+            <div className="list">
               {list.map((f) => (
-                <li key={f.id}>
-                  <button className="picker-row" onClick={() => nav.push({ type: 'food', id: f.id })}>
-                    <span className="ing-name">
-                      <strong>{f.name}</strong>
-                      <span className="small muted">
-                        {f.state} · {f.kcal} kcal · P {f.protein} · G {f.carbs} · L {f.fat}
-                      </span>
+                <button key={f.id} className="list-row" onClick={() => nav.push({ type: 'food', id: f.id })}>
+                  <span className="list-main">
+                    <strong>{f.name}</strong>
+                    <span className="caps" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                      {f.state} · G {f.carbs} · L {f.fat}
+                      {f.verified
+                        ? <span className="verified" aria-label="Vérifié"><CheckCircleIcon size={15} filled /></span>
+                        : <span className="tag tag--amber">à vérifier</span>}
                     </span>
-                    {f.verified
-                      ? <span className="verified" aria-label="Vérifié"><CheckCircleIcon size={20} filled /></span>
-                      : <span className="tag tag--warn">à vérifier</span>}
-                    <ChevronIcon />
-                  </button>
-                </li>
+                  </span>
+                  <span className="list-num"><span className="k">{f.kcal}</span><br /><span className="p">{f.protein} g P</span></span>
+                  <span className="chev"><ChevronIcon /></span>
+                </button>
               ))}
-            </ul>
+            </div>
           </div>
         ))}
       </section>

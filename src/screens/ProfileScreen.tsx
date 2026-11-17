@@ -6,21 +6,10 @@ import type { Settings } from '../types'
 import { lastExportLabel } from '../components/BackupCard'
 import { daysSince } from '../lib/backup'
 import { GOAL_LABEL, TIME_LABEL, trainingDaysLabel } from '../lib/labels'
-import { RoundButton, ScreenHeader } from '../components/ScreenHeader'
+import { ScreenHeader, SquareButton } from '../components/ScreenHeader'
 import {
-  ArrowIcon, CakeIcon, CalendarIcon, ChevronIcon, ClockIcon, DatabaseIcon, GearIcon, PencilIcon,
-  RulerIcon, ScaleIcon, TargetIcon, TargetsIcon,
+  CalendarIcon, ChevronIcon, ClockIcon, DatabaseIcon, GearIcon, PencilIcon, SaveIcon, TargetIcon, TargetsIcon,
 } from '../components/icons'
-
-function StatTile({ icon, value, label }: { icon: ReactNode; value: string; label: string }) {
-  return (
-    <div className="tile tile--stat">
-      <span className="tile-icon tile-icon--brand">{icon}</span>
-      <span className="tile-value">{value}</span>
-      <span className="tile-share">{label}</span>
-    </div>
-  )
-}
 
 function PrefRow({ icon, label, value, onClick, warn }: { icon: ReactNode; label: string; value: string; onClick: () => void; warn?: boolean }) {
   return (
@@ -28,8 +17,8 @@ function PrefRow({ icon, label, value, onClick, warn }: { icon: ReactNode; label
       <button className="pref-row" onClick={onClick}>
         <span className="pref-icon">{icon}</span>
         <span className="pref-text"><span>{label}</span><strong className={warn ? 'warn' : undefined}>{value}</strong></span>
-        {warn && <span className="tag tag--warn">À faire</span>}
-        <ChevronIcon />
+        {warn && <span className="tag tag--amber">À faire</span>}
+        <span className="chev"><ChevronIcon /></span>
       </button>
     </li>
   )
@@ -44,47 +33,50 @@ export function ProfileScreen({ settings }: { settings: Settings }) {
   }, [])
   const goal = GOAL_LABEL[settings.goal ?? 'recomposition']
   const name = settings.name || 'Moi'
+  const pPerKg = settings.weightKg > 0 ? (settings.targets.training.protein / settings.weightKg).toFixed(1).replace('.', ',') : '—'
 
   return (
     <>
       <ScreenHeader
         title="Profil"
-        action={<RoundButton label="Réglages" onClick={onOpenSettings}><GearIcon size={22} /></RoundButton>}
+        subtitle={`Objectif · ${goal.short}`}
+        dot
+        action={<SquareButton label="Réglages" onClick={onOpenSettings}><GearIcon size={20} /></SquareButton>}
       >
-        <div className="profile-card">
-          <span className="avatar">{name.trim().charAt(0).toUpperCase()}</span>
-          <span className="profile-text">
+        <div className="id-card">
+          <span className="avatar" aria-hidden>{name.trim().charAt(0).toUpperCase()}</span>
+          <span className="id-text">
             <strong>{name}</strong>
-            <span>Objectif : {goal.short}</span>
+            <span className="small muted">{pPerKg} g de protéines par kg</span>
           </span>
-          <button className="icon-ghost" aria-label="Modifier le profil" onClick={onOpenSettings}><PencilIcon /></button>
+          <SquareButton label="Modifier le profil" onClick={onOpenSettings}><PencilIcon /></SquareButton>
         </div>
       </ScreenHeader>
 
-      <section className="screen screen--overlap">
-        <div className="tiles">
-          <StatTile icon={<ScaleIcon />} value={`${settings.weightKg} kg`} label="Poids actuel" />
-          <StatTile icon={<RulerIcon />} value={`${settings.heightCm} cm`} label="Taille" />
-          <StatTile icon={<CakeIcon />} value={`${settings.age} ans`} label="Âge" />
+      <section className="screen">
+        <div className="stat-grid" style={{ marginTop: 12 }}>
+          <div className="stat"><span className="caps">Poids</span><span className="stat-val">{settings.weightKg}<small> kg</small></span></div>
+          <div className="stat"><span className="caps">Taille</span><span className="stat-val">{settings.heightCm}<small> cm</small></span></div>
+          <div className="stat"><span className="caps">Âge</span><span className="stat-val">{settings.age}<small> ans</small></span></div>
         </div>
 
         <button className="goal-card" onClick={onOpenSettings}>
-          <span className="goal-icon"><TargetIcon /></span>
+          <span className="lime"><TargetIcon /></span>
           <span className="goal-text">
-            <strong>Mon objectif</strong>
+            <span className="caps caps--lime">Mon objectif</span>
             <span>{goal.long}</span>
           </span>
-          <ChevronIcon />
+          <span className="lime"><ChevronIcon /></span>
         </button>
 
-        <div className="card prefs">
-          <h2><GearIcon size={18} /> Mes préférences</h2>
+        <div className="section-label"><span>Préférences</span></div>
+        <div className="prefs">
           <ul>
-            <PrefRow icon={<CalendarIcon size={22} />} label="Jours d'entraînement" value={trainingDaysLabel(settings.trainingDays)} onClick={onOpenSettings} />
+            <PrefRow icon={<CalendarIcon />} label="Jours d'entraînement" value={trainingDaysLabel(settings.trainingDays)} onClick={onOpenSettings} />
             <PrefRow icon={<ClockIcon />} label="Moment de la séance" value={TIME_LABEL[settings.trainingTime]} onClick={onOpenSettings} />
             <PrefRow
-              icon={<TargetsIcon />} label="Cibles"
-              value={`${settings.targets.rest.kcal} / ${settings.targets.training.kcal} kcal · P ${settings.targets.training.protein} g`}
+              icon={<TargetsIcon />} label="Cibles repos / entraînement"
+              value={`${settings.targets.rest.kcal} / ${settings.targets.training.kcal} kcal · ${settings.targets.training.protein} g P`}
               onClick={onOpenSettings}
             />
             <PrefRow
@@ -93,7 +85,7 @@ export function ProfileScreen({ settings }: { settings: Settings }) {
               onClick={() => nav.push({ type: 'foods' })}
             />
             <PrefRow
-              icon={<ArrowIcon size={20} />} label="Sauvegarde"
+              icon={<SaveIcon />} label="Sauvegarde"
               value={lastExportLabel(settings.lastExportAt)}
               warn={(daysSince(settings.lastExportAt) ?? Infinity) > 7}
               onClick={onOpenSettings}

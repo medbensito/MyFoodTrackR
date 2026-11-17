@@ -1,9 +1,8 @@
 import { useMemo, useState } from 'react'
 import type { Macros, MealSlot, PlannedMeal } from '../types'
-import { roundMacros, scaleMacros, SLOT_LABEL } from '../lib/nutrition'
+import { fmtFactor, roundMacros, scaleMacros, SLOT_LABEL } from '../lib/nutrition'
 import { bestFactor, type PlannerRecipe } from '../lib/planner'
-import { Bowl, bowlFor } from './Bowl'
-import { BackIcon, ChevronIcon, PinIcon } from './icons'
+import { BackIcon, CheckIcon, ChevronIcon } from './icons'
 
 const DAY_FMT = new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })
 
@@ -25,8 +24,6 @@ export type MealSheetProps = {
   onToggleEaten: () => void
 }
 
-const fmtFactor = (f: number) => `×${String(f).replace('.', ',')}`
-
 export function MealSheet(p: MealSheetProps) {
   const [choosing, setChoosing] = useState(p.meal === null)
   const recipe = p.meal ? p.byId.get(p.meal.recipeId) : undefined
@@ -34,71 +31,65 @@ export function MealSheet(p: MealSheetProps) {
   const [y, mo, d] = p.date.split('-').map(Number)
   const dayLabel = DAY_FMT.format(new Date(y, mo - 1, d))
 
-  const options = useMemo(() => {
-    return p.recipes
-      .filter((r) => r.slots.includes(p.slot))
-      .map((r) => {
-        const best = bestFactor(r.perServing, p.slotTarget)
-        return { r, factor: best.factor, score: best.score, m: roundMacros(scaleMacros(r.perServing, best.factor)) }
-      })
-      .sort((a, b) => a.score - b.score)
-  }, [p.recipes, p.slot, p.slotTarget])
+  const options = useMemo(() => p.recipes
+    .filter((r) => r.slots.includes(p.slot))
+    .map((r) => {
+      const best = bestFactor(r.perServing, p.slotTarget)
+      return { r, factor: best.factor, score: best.score, m: roundMacros(scaleMacros(r.perServing, best.factor)) }
+    })
+    .sort((a, b) => a.score - b.score), [p.recipes, p.slot, p.slotTarget])
 
   return (
     <div className="sheet-backdrop" onClick={p.onClose}>
-      <div className="bottom-sheet" role="dialog" aria-modal="true" aria-label={`${SLOT_LABEL[p.slot]} du ${dayLabel}`} onClick={(e) => e.stopPropagation()}>
+      <div className="bottom-sheet" role="dialog" aria-modal="true" aria-label={`${SLOT_LABEL[p.slot]}, ${dayLabel}`} onClick={(e) => e.stopPropagation()}>
         <div className="grabber" />
         <div className="bs-head">
-          {choosing && p.meal ? (
-            <button className="round-btn round-btn--sm round-btn--light" aria-label="Retour" onClick={() => setChoosing(false)}><BackIcon size={18} /></button>
-          ) : null}
+          {choosing && p.meal && (
+            <button className="sq-btn" aria-label="Retour" onClick={() => setChoosing(false)}><BackIcon /></button>
+          )}
           <div className="bs-titles">
-            <strong>{SLOT_LABEL[p.slot]}</strong>
-            <span className="muted small">{dayLabel}</span>
+            <span className="caps caps--lime">{dayLabel}</span>
+            <strong>{choosing ? 'Choisir une recette' : SLOT_LABEL[p.slot]}</strong>
           </div>
           <button className="bs-close" onClick={p.onClose}>Fermer</button>
         </div>
 
         {choosing ? (
-          <div className="bs-body">
-            <p className="muted small">Classées de la plus adaptée à la moins adaptée pour ce créneau, avec la portion conseillée.</p>
-            {options.length === 0 && <p className="footnote">Aucune recette pour ce créneau. Crée-en une dans l'onglet Recettes.</p>}
-            <ul className="card picker-list">
+          <>
+            <p className="bs-hint">Les plus adaptées à ce créneau d'abord, avec la portion conseillée.</p>
+            {options.length === 0 && <p className="footnote">Aucune recette pour ce créneau. Crée-en une dans Recettes.</p>}
+            <div className="list">
               {options.map(({ r, factor, m: om }) => (
-                <li key={r.id}>
-                  <button className="picker-row" onClick={() => { p.onSetRecipe(r.id, factor); setChoosing(false) }}>
-                    <Bowl variant={bowlFor(r.name, r.slots)} size={44} />
-                    <span className="ing-name">
-                      <strong>{r.name}</strong>
-                      <span className="small muted">{fmtFactor(factor)} · {om.kcal} kcal · P {om.protein} g</span>
-                    </span>
-                    {p.meal?.recipeId === r.id && <span className="pill pill--green">Actuel</span>}
-                    <ChevronIcon />
-                  </button>
-                </li>
+                <button key={r.id} className="list-row" onClick={() => { p.onSetRecipe(r.id, factor); setChoosing(false) }}>
+                  <span className="list-main">
+                    <strong>{r.name}</strong>
+                    <span className="caps">{fmtFactor(factor)}{p.meal?.recipeId === r.id ? ' · actuel' : ''}</span>
+                  </span>
+                  <span className="list-num"><span className="k">{om.kcal}</span><br /><span className="p">{om.protein} g P</span></span>
+                  <span className="chev"><ChevronIcon /></span>
+                </button>
               ))}
-            </ul>
-          </div>
+            </div>
+          </>
         ) : p.meal && (
-          <div className="bs-body">
+          <>
             {recipe && m ? (
-              <button className="card meal-current" onClick={() => p.onOpenRecipe(recipe.id)}>
-                <Bowl variant={bowlFor(recipe.name, recipe.slots)} size={64} />
-                <span className="ing-name">
-                  <strong>{recipe.name}</strong>
-                  <span className="small muted">{m.kcal} kcal · P {m.protein} g · G {m.carbs} g · L {m.fat} g</span>
-                  <span className="small link">Voir la recette</span>
+              <button className="card" style={{ width: '100%', textAlign: 'left', color: 'inherit' }} onClick={() => p.onOpenRecipe(recipe.id)}>
+                <span className="caps">Recette · voir le détail</span>
+                <span style={{ display: 'block', marginTop: 4, fontFamily: 'var(--display)', fontWeight: 800, fontSize: 30, lineHeight: 0.95, textTransform: 'uppercase' }}>{recipe.name}</span>
+                <span className="preview" style={{ margin: '12px 0 0', padding: 0, border: 0, background: 'none' }}>
+                  <span><span className="d">{m.kcal}</span><span className="caps">kcal</span></span>
+                  <span><span className="d lime">{m.protein}</span><span className="caps">g prot.</span></span>
+                  <span><span className="d cyan">{m.carbs}</span><span className="caps">g gluc.</span></span>
+                  <span><span className="d amber">{m.fat}</span><span className="caps">g lip.</span></span>
                 </span>
               </button>
             ) : (
               <div className="card"><p className="error">Cette recette a été supprimée.</p></div>
             )}
 
-            <button className={`eaten-btn ${p.eaten ? 'eaten-btn--on' : ''}`} aria-pressed={p.eaten} disabled={!recipe} onClick={p.onToggleEaten}>
-              <span className="eaten-check" aria-hidden>
-                <svg viewBox="0 0 24 24" width="18" height="18"><path d="M6 12.5l4 4L18 8.5" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
-              </span>
-              {p.eaten ? 'Mangé · ajouté au tracker' : 'Marquer comme mangé'}
+            <button className={`btn btn--block eaten-btn ${p.eaten ? 'btn--lime' : 'btn--outline'}`} aria-pressed={p.eaten} disabled={!recipe} onClick={p.onToggleEaten}>
+              {p.eaten ? <><CheckIcon /> Mangé</> : 'Marquer comme mangé'}
             </button>
 
             <div className="card">
@@ -112,7 +103,7 @@ export function MealSheet(p: MealSheetProps) {
                     onClick={() => p.onSetFactor(Math.min(3, p.meal!.portionFactor + 0.25))}>+</button>
                 </span>
               </div>
-              <label className="field switch-field">
+              <label className="field">
                 <span>
                   Épinglé
                   <span className="small muted block">« Régénérer » ne touche pas aux repas épinglés</span>
@@ -121,13 +112,12 @@ export function MealSheet(p: MealSheetProps) {
               </label>
             </div>
 
-            <button className="cta cta--light" onClick={() => setChoosing(true)}>Changer de recette</button>
+            <button className="btn btn--block" onClick={() => setChoosing(true)}>Changer de recette</button>
             <div className="danger-zone">
               <button className="link-danger" onClick={p.onRemove}>Retirer ce repas</button>
             </div>
-          </div>
+          </>
         )}
-        {!choosing && p.meal?.pinned && <p className="bs-pin"><PinIcon size={14} filled /> Modifié à la main</p>}
       </div>
     </div>
   )

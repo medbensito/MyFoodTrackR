@@ -11,7 +11,7 @@ import { ScreenHeader } from '../components/ScreenHeader'
 
 // Affichage lundi → dimanche, valeurs JS getDay()
 const DAYS: { value: number; label: string }[] = [
-  { value: 1, label: 'L' }, { value: 2, label: 'M' }, { value: 3, label: 'M' },
+  { value: 1, label: 'L' }, { value: 2, label: 'Ma' }, { value: 3, label: 'Me' },
   { value: 4, label: 'J' }, { value: 5, label: 'V' }, { value: 6, label: 'S' }, { value: 0, label: 'D' },
 ]
 const DAY_NAMES = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi']
@@ -30,6 +30,8 @@ function NumberField({ label, value, unit, onChange, step = 1 }: {
       <span>{label}</span>
       <span className="field-input">
         <input
+          className="input input--num"
+          aria-label={label}
           type="number"
           inputMode="decimal"
           step={step}
@@ -53,9 +55,9 @@ function TargetBlock({ title, m, onChange }: { title: string; m: Macros; onChang
       <NumberField label="Calories" unit="kcal" value={m.kcal} step={50} onChange={(v) => set({ kcal: v })} />
       <NumberField label="Protéines" unit="g" value={m.protein} step={5} onChange={(v) => set({ protein: v })} />
       <NumberField label="Lipides" unit="g" value={m.fat} step={5} onChange={(v) => set({ fat: v })} />
-      <div className="field field--computed">
-        <span>Glucides <em>(calculés)</em></span>
-        <span className="field-input"><strong>{Number.isFinite(m.carbs) ? m.carbs : '—'}</strong><span className="unit">g</span></span>
+      <div className="field">
+        <span>Glucides <span className="small muted">calculés</span></span>
+        <span className="field-input"><strong className="computed">{Number.isFinite(m.carbs) ? m.carbs : '—'}</strong><span className="unit">g</span></span>
       </div>
     </div>
   )
@@ -88,7 +90,7 @@ export function SettingsScreen({ settings, onBack }: { settings: Settings; onBac
   const comparable = (x: Settings) => JSON.stringify({ ...x, lastExportAt: undefined })
   const dirty = comparable(draft) !== comparable(settings)
   const valid = isValid(draft)
-  const proteinPerKg = draft.weightKg > 0 ? (draft.targets.training.protein / draft.weightKg).toFixed(1) : '—'
+  const proteinPerKg = draft.weightKg > 0 ? (draft.targets.training.protein / draft.weightKg).toFixed(1).replace('.', ',') : '—'
 
   const save = async () => {
     if (!valid) return
@@ -103,12 +105,13 @@ export function SettingsScreen({ settings, onBack }: { settings: Settings; onBac
       subtitle="Profil, entraînement et cibles"
       back={onBack}
     />
-    <section className="screen">
+    <section className="screen" style={{ marginTop: 18, paddingBottom: dirty ? 'calc(var(--safe-bottom) + 130px)' : undefined }}>
+      {saved && !dirty && <p className="ok small" role="status" style={{ marginBottom: 12 }}>Réglages enregistrés.</p>}
       <div className="card">
         <h2>Profil</h2>
         <label className="field">
           <span>Nom</span>
-          <input className="text-input" value={draft.name ?? ''} onChange={(e) => update({ name: e.target.value })} />
+          <input className="input input--text" aria-label="Nom" value={draft.name ?? ''} onChange={(e) => update({ name: e.target.value })} />
         </label>
         <NumberField label="Poids" unit="kg" value={draft.weightKg} step={0.5} onChange={(v) => update({ weightKg: v })} />
         <NumberField label="Taille" unit="cm" value={draft.heightCm} onChange={(v) => update({ heightCm: v })} />
@@ -121,7 +124,7 @@ export function SettingsScreen({ settings, onBack }: { settings: Settings; onBac
             </button>
           ))}
         </div>
-        <p className="muted small">Changer d'objectif ne modifie pas les cibles : ajuste-les plus bas.</p>
+        <p className="muted small" style={{ marginTop: 10 }}>Changer d'objectif ne modifie pas les cibles : ajuste-les plus bas.</p>
       </div>
 
       <div className="card">
@@ -139,7 +142,7 @@ export function SettingsScreen({ settings, onBack }: { settings: Settings; onBac
             </button>
           ))}
         </div>
-        <p className="muted small">{draft.trainingDays.length} séances par semaine</p>
+        <p className="muted small" style={{ marginTop: 10 }}>{draft.trainingDays.length} séances par semaine</p>
         <div className="segmented" role="radiogroup" aria-label="Moment de la séance">
           {TIMES.map((t) => (
             <button
@@ -161,27 +164,29 @@ export function SettingsScreen({ settings, onBack }: { settings: Settings; onBac
           onChange={(m) => update({ targets: { ...draft.targets, rest: m } })} />
         <TargetBlock title="Jour d'entraînement" m={draft.targets.training}
           onChange={(m) => update({ targets: { ...draft.targets, training: m } })} />
-        <p className="muted small">Protéines : {proteinPerKg} g par kg de poids corporel.</p>
+        <p className="muted small" style={{ marginTop: 10 }}>Protéines : {proteinPerKg} g par kg de poids corporel.</p>
       </div>
 
       <div className="card">
         <h2>Base d'aliments</h2>
-        <p>
-          {foodStats ? `${foodStats.total} aliments · ${foodStats.verified} vérifiés` : '…'}
-        </p>
-        <button className="secondary" onClick={() => nav.push({ type: 'foods' })}>Gérer les aliments</button>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+          <span>{foodStats ? `${foodStats.total} aliments · ${foodStats.verified} vérifiés` : '…'}</span>
+          <button className="btn btn--sm" onClick={() => nav.push({ type: 'foods' })}>Gérer</button>
+        </div>
       </div>
 
-
-      <div className="save-bar">
-        {!valid && <span className="error small">Certaines valeurs sont vides ou invalides.</span>}
-        {saved && !dirty && <span className="ok small">Enregistré</span>}
-        <button className="primary" disabled={!dirty || !valid} onClick={save}>Enregistrer</button>
-      </div>
 
       <BackupCard lastExportAt={settings.lastExportAt} />
       <InstallCard />
     </section>
+    {dirty && (
+      <div className="cta-bar">
+        <div>
+          {!valid && <p className="error small" style={{ marginBottom: 8, textAlign: 'center' }}>Certaines valeurs sont vides ou invalides.</p>}
+          <button className="btn btn--lime btn--block" disabled={!valid} onClick={save}>Enregistrer les réglages</button>
+        </div>
+      </div>
+    )}
     </>
   )
 }

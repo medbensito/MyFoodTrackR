@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildMacros, computeCarbs, DEFAULT_SETTINGS, isTrainingDay, startOfWeek, targetsForDate, toISODate, weekDays } from './targets'
+import { isoWeek, buildMacros, computeCarbs, DEFAULT_SETTINGS, isTrainingDay, startOfWeek, targetsForDate, toISODate, weekDays } from './targets'
 
 describe('computeCarbs', () => {
   it('calcule les glucides restants', () => {
@@ -35,5 +35,13 @@ describe('jours d\'entraînement', () => {
   it('applique la bonne cible', () => {
     expect(targetsForDate(days[0], DEFAULT_SETTINGS).kcal).toBe(2200)
     expect(targetsForDate(days[1], DEFAULT_SETTINGS).kcal).toBe(2400)
+  })
+})
+
+describe('isoWeek', () => {
+  it('suit la norme ISO', () => {
+    expect(isoWeek(new Date(2026, 10, 17))).toBe(47)
+    expect(isoWeek(new Date(2026, 0, 1))).toBe(1)
+    expect(isoWeek(new Date(2027, 0, 1))).toBe(53)
   })
 })

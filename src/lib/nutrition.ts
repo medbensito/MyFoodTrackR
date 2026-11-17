@@ -62,6 +62,13 @@ export const SLOT_LABEL: Record<MealSlot, string> = {
 }
 export const SLOT_ORDER: MealSlot[] = ['breakfast', 'lunch', 'dinner', 'snack']
 
+/** Libellé court pour les colonnes étroites. */
+export const SLOT_SHORT: Record<MealSlot, string> = { breakfast: 'Petit-déj', lunch: 'Déjeuner', dinner: 'Dîner', snack: 'Collation' }
+/** « Le dîner », « La collation »… pour les phrases. */
+export const SLOT_THE: Record<MealSlot, string> = { breakfast: 'Le petit-déj', lunch: 'Le déjeuner', dinner: 'Le dîner', snack: 'La collation' }
+
+export const fmtFactor = (f: number) => `×${String(f).replace('.', ',')}`
+
 export const CATEGORY_LABEL: Record<string, string> = {
   proteines: 'Protéines',
   laitier: 'Produits laitiers',

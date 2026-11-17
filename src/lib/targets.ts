@@ -58,3 +58,12 @@ export function toISODate(date: Date): string {
   const d = String(date.getDate()).padStart(2, '0')
   return `${y}-${m}-${d}`
 }
+
+/** Numéro de semaine ISO 8601. */
+export function isoWeek(date: Date): number {
+  const t = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()))
+  const day = t.getUTCDay() || 7
+  t.setUTCDate(t.getUTCDate() + 4 - day)
+  const yearStart = new Date(Date.UTC(t.getUTCFullYear(), 0, 1))
+  return Math.ceil(((t.getTime() - yearStart.getTime()) / 86_400_000 + 1) / 7)
+}

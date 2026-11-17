@@ -1,14 +1,11 @@
 import { useMemo, useState } from 'react'
 import type { Food, LogEntry, MealSlot } from '../types'
 import type { PlannerRecipe } from '../lib/planner'
-import { macrosForGrams, normalize, roundMacros, scaleMacros, SLOT_LABEL, SLOT_ORDER } from '../lib/nutrition'
+import { fmtFactor, macrosForGrams, normalize, roundMacros, scaleMacros, SLOT_LABEL, SLOT_ORDER } from '../lib/nutrition'
 import { entryFromFood, entryFromRecipe, slotForHour } from '../lib/journal'
-import { Bowl, bowlFor } from './Bowl'
 import { BackIcon, ChevronIcon } from './icons'
 
 type Picked = { kind: 'recipe'; r: PlannerRecipe } | { kind: 'food'; f: Food }
-
-const fmtFactor = (f: number) => `×${String(f).replace('.', ',')}`
 
 /** Ajout libre au journal : une recette (en portions) ou un aliment (en grammes). */
 export function AddEntrySheet({ date, recipes, foods, onAdd, onClose }: {
@@ -26,14 +23,13 @@ export function AddEntrySheet({ date, recipes, foods, onAdd, onClose }: {
   const [grams, setGrams] = useState(100)
 
   const q = normalize(query)
-  const list = useMemo(() => (mode === 'recipe'
-    ? recipes.filter((r) => !q || normalize(r.name).includes(q)).sort((a, b) => a.name.localeCompare(b.name, 'fr'))
-    : foods.filter((f) => !q || normalize(f.name).includes(q))), [mode, q, recipes, foods])
+  const recipeList = useMemo(() => recipes.filter((r) => !q || normalize(r.name).includes(q)).sort((a, b) => a.name.localeCompare(b.name, 'fr')), [recipes, q])
+  const foodList = useMemo(() => foods.filter((f) => !q || normalize(f.name).includes(q)), [foods, q])
 
   const preview = picked
     ? roundMacros(picked.kind === 'recipe' ? scaleMacros(picked.r.perServing, factor) : macrosForGrams(picked.f, grams || 0))
     : null
-  const valid = picked && (picked.kind === 'recipe' ? factor > 0 : grams > 0)
+  const valid = !!picked && (picked.kind === 'recipe' ? factor > 0 : grams > 0)
 
   const pick = (p: Picked) => {
     setPicked(p)
@@ -51,52 +47,53 @@ export function AddEntrySheet({ date, recipes, foods, onAdd, onClose }: {
       <div className="bottom-sheet bottom-sheet--tall" role="dialog" aria-modal="true" aria-label="Ajouter au journal" onClick={(e) => e.stopPropagation()}>
         <div className="grabber" />
         <div className="bs-head">
-          {picked && <button className="round-btn round-btn--sm round-btn--light" aria-label="Retour" onClick={() => setPicked(null)}><BackIcon size={18} /></button>}
-          <div className="bs-titles"><strong>{picked ? (picked.kind === 'recipe' ? picked.r.name : picked.f.name) : 'Ajouter un repas'}</strong></div>
+          {picked && <button className="sq-btn" aria-label="Retour" onClick={() => setPicked(null)}><BackIcon /></button>}
+          <div className="bs-titles">
+            <span className="caps caps--lime">Hors plan</span>
+            <strong>{picked ? (picked.kind === 'recipe' ? picked.r.name : picked.f.name) : 'Ajouter un repas'}</strong>
+          </div>
           <button className="bs-close" onClick={onClose}>Fermer</button>
         </div>
 
         {!picked ? (
-          <div className="bs-body">
-            <div className="segmented segmented--top" role="tablist">
+          <>
+            <div className="segmented" role="tablist" style={{ marginTop: 0, marginBottom: 12 }}>
               <button role="tab" aria-selected={mode === 'recipe'} className={mode === 'recipe' ? 'seg--on' : ''} onClick={() => setMode('recipe')}>Recette</button>
               <button role="tab" aria-selected={mode === 'food'} className={mode === 'food' ? 'seg--on' : ''} onClick={() => setMode('food')}>Aliment</button>
             </div>
-            <input className="search-input search-input--sheet" type="search" value={query} onChange={(e) => setQuery(e.target.value)}
+            <input className="search" type="search" value={query} onChange={(e) => setQuery(e.target.value)}
+              aria-label={mode === 'recipe' ? 'Rechercher une recette' : 'Rechercher un aliment'}
               placeholder={mode === 'recipe' ? 'Rechercher une recette' : 'Rechercher un aliment'} />
-            {list.length === 0 && <p className="footnote">Aucun résultat.</p>}
-            <ul className="card picker-list">
+            <div className="list" style={{ marginTop: 6 }}>
               {mode === 'recipe'
-                ? (list as PlannerRecipe[]).map((r) => {
+                ? recipeList.map((r) => {
                   const m = roundMacros(r.perServing)
                   return (
-                    <li key={r.id}>
-                      <button className="picker-row" onClick={() => pick({ kind: 'recipe', r })}>
-                        <Bowl variant={bowlFor(r.name, r.slots)} size={40} />
-                        <span className="ing-name"><strong>{r.name}</strong><span className="small muted">1 portion · {m.kcal} kcal · P {m.protein} g</span></span>
-                        <ChevronIcon />
-                      </button>
-                    </li>
+                    <button key={r.id} className="list-row" onClick={() => pick({ kind: 'recipe', r })}>
+                      <span className="list-main"><strong>{r.name}</strong><span className="caps">1 portion</span></span>
+                      <span className="list-num"><span className="k">{m.kcal}</span><br /><span className="p">{m.protein} g P</span></span>
+                      <span className="chev"><ChevronIcon /></span>
+                    </button>
                   )
                 })
-                : (list as Food[]).map((f) => (
-                  <li key={f.id}>
-                    <button className="picker-row" onClick={() => pick({ kind: 'food', f })}>
-                      <span className="ing-name"><strong>{f.name}</strong><span className="small muted">{f.state} · {f.kcal} kcal · P {f.protein} g / 100 g</span></span>
-                      <ChevronIcon />
-                    </button>
-                  </li>
+                : foodList.map((f) => (
+                  <button key={f.id} className="list-row" onClick={() => pick({ kind: 'food', f })}>
+                    <span className="list-main"><strong>{f.name}</strong><span className="caps">{f.state} · pour 100 g</span></span>
+                    <span className="list-num"><span className="k">{f.kcal}</span><br /><span className="p">{f.protein} g P</span></span>
+                    <span className="chev"><ChevronIcon /></span>
+                  </button>
                 ))}
-            </ul>
-          </div>
+            </div>
+            {(mode === 'recipe' ? recipeList : foodList).length === 0 && <p className="footnote">Aucun résultat.</p>}
+          </>
         ) : (
-          <div className="bs-body">
+          <>
             {preview && (
-              <div className="preview-card">
-                <span className="preview-kcal">{preview.kcal}<small> kcal</small></span>
-                <span>P <b className="c-protein-text">{preview.protein}</b> g</span>
-                <span>G <b>{preview.carbs}</b> g</span>
-                <span>L <b>{preview.fat}</b> g</span>
+              <div className="preview">
+                <div><span className="d">{preview.kcal}</span><span className="caps">kcal</span></div>
+                <div><span className="d lime">{preview.protein}</span><span className="caps">g prot.</span></div>
+                <div><span className="d cyan">{preview.carbs}</span><span className="caps">g gluc.</span></div>
+                <div><span className="d amber">{preview.fat}</span><span className="caps">g lip.</span></div>
               </div>
             )}
             <div className="card">
@@ -113,7 +110,7 @@ export function AddEntrySheet({ date, recipes, foods, onAdd, onClose }: {
                 <label className="field">
                   <span>Quantité <span className="small muted">({picked.f.state})</span></span>
                   <span className="field-input">
-                    <input type="number" inputMode="decimal" value={Number.isFinite(grams) ? grams : ''}
+                    <input className="input input--num" type="number" inputMode="decimal" value={Number.isFinite(grams) ? grams : ''}
                       onChange={(e) => setGrams(e.target.value === '' ? NaN : Number(e.target.value))} />
                     <span className="unit">g</span>
                   </span>
@@ -130,8 +127,8 @@ export function AddEntrySheet({ date, recipes, foods, onAdd, onClose }: {
                 </div>
               </div>
             </div>
-            <button className="cta" disabled={!valid} onClick={add}>Ajouter au journal</button>
-          </div>
+            <button className="btn btn--lime btn--block" disabled={!valid} onClick={add}>Ajouter au journal</button>
+          </>
         )}
       </div>
     </div>

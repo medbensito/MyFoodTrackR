@@ -52,7 +52,7 @@ export function InstallCard() {
           ? 'Le système ne doit pas effacer tes données.'
           : s.standalone ? 'Installée, l\'app est protégée contre l\'effacement automatique de Safari.' : 'Installe l\'app pour éviter que Safari n\'efface les données après une longue absence.'} />
       {s.persisted === false && (
-        <button className="secondary" onClick={async () => { await requestPersistentStorage(); setS(await readStatus()) }}>
+        <button className="btn btn--sm" style={{ marginTop: 6 }} onClick={async () => { await requestPersistentStorage(); setS(await readStatus()) }}>
           Demander la protection du stockage
         </button>
       )}

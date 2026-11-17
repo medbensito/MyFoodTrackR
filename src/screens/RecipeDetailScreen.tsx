@@ -1,101 +1,122 @@
+import { useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db/db'
 import { useFoodsMap } from '../db/hooks'
 import { useNav } from '../nav'
 import { macroShares } from '../lib/labels'
-import { macrosForGrams, recipeTotals, roundMacros, SLOT_LABEL, SLOT_ORDER } from '../lib/nutrition'
-import { RoundButton, ScreenHeader } from '../components/ScreenHeader'
-import { Bowl, bowlFor } from '../components/Bowl'
-import { DropIcon, FlameIcon, LeafIcon, PencilIcon } from '../components/icons'
+import { fmtFactor, macrosForGrams, recipeTotals, roundMacros, scaleMacros, SLOT_LABEL, SLOT_ORDER } from '../lib/nutrition'
+import { ScreenHeader } from '../components/ScreenHeader'
+import { AddToPlanSheet } from '../components/AddToPlanSheet'
 
 export function RecipeDetailScreen({ id }: { id: string }) {
   const nav = useNav()
   const recipe = useLiveQuery(() => db.recipes.get(id).then((r) => r ?? null), [id])
   const foods = useFoodsMap()
+  /** Aperçu d'une autre portion : ne modifie pas la recette. */
+  const [factor, setFactor] = useState(1)
+  const [planning, setPlanning] = useState(false)
+  const [done, setDone] = useState<string | null>(null)
 
   if (recipe === undefined || !foods) return <div className="loading">Chargement…</div>
   if (recipe === null) return null
 
   const totals = recipeTotals(recipe, foods)
-  const m = roundMacros(totals.perServing)
-  const shares = macroShares(m)
+  const m = roundMacros(scaleMacros(totals.perServing, factor))
+  const shares = macroShares(roundMacros(totals.perServing))
+  const portionGrams = Math.round((totals.totalGrams / Math.max(1, recipe.servings)) * factor)
+  const slotsLabel = SLOT_ORDER.filter((s) => recipe.slots.includes(s)).map((s) => SLOT_LABEL[s]).join(' / ')
   const edit = () => nav.push({ type: 'recipe-edit', id })
+  const ingFactor = factor / Math.max(1, recipe.servings)
 
   return (
     <>
       <ScreenHeader
-        title={recipe.name}
-        compact
         back={nav.pop}
-        action={<RoundButton label="Modifier" onClick={edit}><PencilIcon size={20} /></RoundButton>}
-      >
-        <div className="hero-card recipe-hero">
+        backAction={<button className="btn btn--sm" onClick={edit}>Modifier</button>}
+      />
+
+      <section className="screen" style={{ paddingBottom: 'calc(var(--safe-bottom) + 120px)' }}>
+        <span className="caps caps--lime" style={{ fontSize: 12, letterSpacing: '0.14em' }}>Recette · {slotsLabel}</span>
+        <h1 className="recipe-title">{recipe.name}</h1>
+
+        <div className="macro4">
+          <div><span className="d">{m.kcal}</span><span className="caps">kcal</span></div>
+          <div><span className="d lime">{m.protein}<small>g</small></span><span className="caps">Protéines</span></div>
+          <div><span className="d cyan">{m.carbs}<small>g</small></span><span className="caps">Glucides</span></div>
+          <div><span className="d amber">{m.fat}<small>g</small></span><span className="caps">Lipides</span></div>
+        </div>
+        <div className="split" style={{ marginTop: 16 }} aria-hidden>
+          <span style={{ width: `${shares.protein}%`, background: 'var(--lime)' }} />
+          <span style={{ width: `${shares.carbs}%`, background: 'var(--cyan)' }} />
+          <span style={{ width: `${shares.fat}%`, background: 'var(--amber)' }} />
+        </div>
+        <p className="small muted" style={{ marginTop: 8 }}>
+          Calories : {shares.protein} % protéines · {shares.carbs} % glucides · {shares.fat} % lipides
+        </p>
+
+        <div className="portion-row">
           <div>
-            <div className="hero-card-label"><span className="flame"><FlameIcon size={20} /></span> Par portion</div>
-            <div className="hero-card-value">{m.kcal}<small> kcal</small></div>
-            <div className="slot-tags">
-              {SLOT_ORDER.filter((s) => recipe.slots.includes(s)).map((s) => <span key={s} className="slot-tag">{SLOT_LABEL[s]}</span>)}
-            </div>
+            <span className="caps">Portion</span>
+            <span style={{ fontSize: 14, fontWeight: 600 }}>{fmtFactor(factor)} · {portionGrams} g</span>
           </div>
-          <div className="recipe-hero-art"><Bowl variant={bowlFor(recipe.name, recipe.slots)} size={118} /></div>
-        </div>
-      </ScreenHeader>
-
-      <section className="screen screen--overlap">
-        <div className="tiles">
-          <div className="tile"><span className="tile-icon tile-icon--protein"><FlameIcon /></span><span className="tile-label">Protéines</span><span className="tile-value">{m.protein} g</span><span className="tile-share">({shares.protein}%)</span></div>
-          <div className="tile"><span className="tile-icon tile-icon--carbs"><LeafIcon /></span><span className="tile-label">Glucides</span><span className="tile-value">{m.carbs} g</span><span className="tile-share">({shares.carbs}%)</span></div>
-          <div className="tile"><span className="tile-icon tile-icon--fat"><DropIcon /></span><span className="tile-label">Lipides</span><span className="tile-value">{m.fat} g</span><span className="tile-share">({shares.fat}%)</span></div>
-        </div>
-
-        <div className="section-head">
-          <h2>Ingrédients</h2>
-          <span className="muted small">
-            {recipe.servings} portion{recipe.servings > 1 ? 's' : ''} · {Math.round(totals.totalGrams)} g
+          <span className="stepper">
+            <button aria-label="Diminuer la portion" disabled={factor <= 0.25} onClick={() => setFactor(Math.max(0.25, factor - 0.25))}>−</button>
+            <strong>{fmtFactor(factor)}</strong>
+            <button aria-label="Augmenter la portion" disabled={factor >= 3} onClick={() => setFactor(Math.min(3, factor + 0.25))}>+</button>
           </span>
         </div>
-        <ul className="card ing-list">
+
+        <div className="section-label" style={{ marginTop: 22 }}>
+          <span>Ingrédients</span>
+          {totals.unverifiedFoodIds.length > 0 && (
+            <span className="small amber">{totals.unverifiedFoodIds.length} valeur{totals.unverifiedFoodIds.length > 1 ? 's' : ''} à vérifier</span>
+          )}
+        </div>
+        <div>
           {recipe.ingredients.map((ing, i) => {
             const food = foods.get(ing.foodId)
+            const grams = Math.round(ing.grams * ingFactor)
             if (!food) {
               return (
-                <li key={i} className="ing-row">
-                  <span className="ing-name"><strong className="error">Aliment supprimé</strong><span className="small muted">{ing.grams} g · non compté</span></span>
-                </li>
+                <div key={i} className="ing-row">
+                  <span className="ing-g">{grams}<small> g</small></span>
+                  <span className="ing-name"><strong className="error">Aliment supprimé</strong><span className="sub">non compté</span></span>
+                </div>
               )
             }
-            const im = roundMacros(macrosForGrams(food, ing.grams))
+            const im = roundMacros(macrosForGrams(food, grams))
             return (
-              <li key={i} className="ing-row">
+              <div key={i} className="ing-row">
+                <span className="ing-g">{grams}<small> g</small></span>
                 <span className="ing-name">
                   <strong>{food.name}</strong>
-                  <span className="small muted">
-                    {food.state} · {im.kcal} kcal · P {im.protein} g
-                    {!food.verified && <span className="tag tag--warn">à vérifier</span>}
-                  </span>
+                  <span className="sub">{food.state}{!food.verified && <span className="tag tag--amber">à vérifier</span>}</span>
                 </span>
-                <span className="ing-grams">{ing.grams} g</span>
-              </li>
+                <span className="ing-num">{im.kcal}<br /><span className="lime">{im.protein} g P</span></span>
+              </div>
             )
           })}
-        </ul>
-
-        {totals.unverifiedFoodIds.length > 0 && (
-          <p className="footnote">
-            {totals.unverifiedFoodIds.length} ingrédient{totals.unverifiedFoodIds.length > 1 ? 's' : ''} avec des valeurs approximatives.
-            Vérifie-les dans Profil → Base d'aliments.
-          </p>
-        )}
+        </div>
 
         {recipe.notes && (
           <>
-            <div className="section-head"><h2>Préparation</h2></div>
-            <div className="card"><p className="notes">{recipe.notes}</p></div>
+            <div className="section-label"><span>Préparation</span></div>
+            <p className="notes">{recipe.notes}</p>
           </>
         )}
-
-        <button className="cta" onClick={edit}>Modifier la recette <PencilIcon size={18} /></button>
+        {recipe.servings > 1 && <p className="footnote">La recette entière fait {recipe.servings} portions.</p>}
       </section>
+
+      <div className="cta-bar">
+        {done
+          ? <button className="btn btn--outline btn--block" onClick={() => setDone(null)}>Ajouté : {done}</button>
+          : <button className="btn btn--lime btn--block" onClick={() => setPlanning(true)}>Ajouter au planning</button>}
+      </div>
+
+      {planning && (
+        <AddToPlanSheet recipe={recipe} factor={factor} onClose={() => setPlanning(false)}
+          onDone={(label) => { setPlanning(false); setDone(label) }} />
+      )}
     </>
   )
 }

@@ -18,7 +18,7 @@ function Num({ label, unit, value, onChange }: { label: string; unit: string; va
     <label className="field">
       <span>{label}</span>
       <span className="field-input">
-        <input type="number" inputMode="decimal" step="0.1" value={Number.isFinite(value) ? value : ''}
+        <input className="input input--num" type="number" inputMode="decimal" step="0.1" aria-label={label} value={Number.isFinite(value) ? value : ''}
           onChange={(e) => onChange(e.target.value === '' ? NaN : Number(e.target.value))} />
         <span className="unit">{unit}</span>
       </span>
@@ -63,13 +63,13 @@ export function FoodEditScreen({ id }: { id: string | null }) {
 
   return (
     <>
-      <ScreenHeader title={id ? draft.name || 'Aliment' : 'Nouvel aliment'} compact subtitle="Valeurs pour 100 g" back={nav.pop} />
+      <ScreenHeader title={id ? draft.name || 'Aliment' : 'Nouvel aliment'} subtitle="Valeurs pour 100 g" back={nav.pop} />
 
       <section className="screen">
         <div className="card">
           <label className="stack-field">
             <span>Nom</span>
-            <input className="text-input text-input--full" placeholder="Ex. Harira maison" value={draft.name}
+            <input className="input input--full" placeholder="Ex. Harira maison" value={draft.name}
               onChange={(e) => update({ name: e.target.value })} />
           </label>
           <label className="field">
@@ -84,7 +84,7 @@ export function FoodEditScreen({ id }: { id: string | null }) {
               {STATES.map((s) => <option key={s} value={s}>{s}</option>)}
             </select>
           </label>
-          <p className="muted small">Cru et cuit n'ont pas les mêmes valeurs : pèse dans l'état choisi.</p>
+          <p className="muted small" style={{ marginTop: 8 }}>Cru et cuit n'ont pas les mêmes valeurs : pèse dans l'état choisi.</p>
         </div>
 
         <div className="card">
@@ -94,7 +94,7 @@ export function FoodEditScreen({ id }: { id: string | null }) {
           <Num label="Glucides" unit="g" value={draft.carbs} onChange={(v) => update({ carbs: v })} />
           <Num label="Lipides" unit="g" value={draft.fat} onChange={(v) => update({ fat: v })} />
           {computed !== null && (
-            <p className={`small ${gap > 0.12 ? 'warn' : 'muted'}`}>
+            <p className={`small ${gap > 0.12 ? 'warn' : 'muted'}`} style={{ marginTop: 8 }}>
               Calcul depuis les macros : {computed} kcal
               {gap > 0.12 && ' — écart important avec les calories saisies, vérifie les valeurs.'}
             </p>
@@ -106,9 +106,9 @@ export function FoodEditScreen({ id }: { id: string | null }) {
           <Num label="Portion par défaut" unit="g" value={draft.defaultPortionG} onChange={(v) => update({ defaultPortionG: v })} />
           <label className="field">
             <span>Source</span>
-            <input className="text-input" value={draft.source} onChange={(e) => update({ source: e.target.value })} />
+            <input className="input input--text" value={draft.source} onChange={(e) => update({ source: e.target.value })} />
           </label>
-          <label className="field switch-field">
+          <label className="field">
             <span>
               Valeurs vérifiées
               <span className="small muted block">Ciqual, étiquette ou autre source fiable</span>
@@ -122,7 +122,7 @@ export function FoodEditScreen({ id }: { id: string | null }) {
         </div>
 
         {!valid && <p className="footnote">Renseigne un nom, des valeurs positives et une portion pour enregistrer.</p>}
-        <button className="cta" disabled={!valid} onClick={save}>Enregistrer</button>
+        <button className="btn btn--lime btn--block" style={{ marginTop: 6 }} disabled={!valid} onClick={save}>Enregistrer</button>
 
         {id && (
           <div className="danger-zone">
@@ -135,8 +135,8 @@ export function FoodEditScreen({ id }: { id: string | null }) {
               <>
                 <p className="small">Supprimer définitivement « {draft.name} » ?</p>
                 <div className="danger-actions">
-                  <button className="secondary" onClick={() => setConfirmDelete(false)}>Annuler</button>
-                  <button className="danger" onClick={remove}>Supprimer</button>
+                  <button className="btn btn--sm" onClick={() => setConfirmDelete(false)}>Annuler</button>
+                  <button className="btn btn--danger btn--sm" onClick={remove}>Supprimer</button>
                 </div>
               </>
             ) : (

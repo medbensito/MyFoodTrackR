@@ -5,63 +5,51 @@ import { db } from '../db/db'
 import { useFoods } from '../db/hooks'
 import { usePlannerRecipes } from '../db/usePlannerRecipes'
 import { isTrainingDay, targetsForDate, toISODate } from '../lib/targets'
-import { roundMacros, scaleMacros, SLOT_LABEL, SLOT_ORDER } from '../lib/nutrition'
+import { fmtFactor, roundMacros, scaleMacros, SLOT_LABEL, SLOT_ORDER, SLOT_SHORT, SLOT_THE } from '../lib/nutrition'
 import { dayTotal } from '../lib/planner'
-import { entryFromPlanned, remainingLabel, totalOf } from '../lib/journal'
-import { RoundButton, ScreenHeader } from '../components/ScreenHeader'
-import { Bowl, bowlFor } from '../components/Bowl'
+import { entryFromPlanned, totalOf } from '../lib/journal'
+import { ScreenHeader, SquareButton } from '../components/ScreenHeader'
 import { AddEntrySheet } from '../components/AddEntrySheet'
-import { BackIcon, CalendarIcon, ChevronIcon, DropIcon, FlameIcon, LeafIcon, PlusIcon } from '../components/icons'
+import { BackIcon, CheckIcon, ChevronIcon, PlusIcon } from '../components/icons'
 
-const DATE_FMT = new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })
-const fmtFactor = (f: number) => `×${String(f).replace('.', ',')}`
+const SUB_FMT = new Intl.DateTimeFormat('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })
+const TITLE_FMT = new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric' })
 const signed = (n: number, unit: string) => `${n > 0 ? '+' : n < 0 ? '−' : ''}${Math.abs(n)} ${unit}`
+const clean = (s: string) => s.replace(/\./g, '')
 
-function Ring({ value, target }: { value: number; target: number }) {
-  const r = 92
-  const c = 2 * Math.PI * r
-  const pct = target > 0 ? Math.min(1, value / target) : 0
-  const over = target > 0 && value > target * 1.05
+/** Jauge en 14 segments ; le segment en cours est rempli au prorata. */
+function Segments({ value, target }: { value: number; target: number }) {
+  const n = 14
+  const filled = target > 0 ? Math.min(n, (value / target) * n) : 0
   return (
-    <svg className="ring" viewBox="0 0 220 220" aria-hidden>
-      <defs>
-        <linearGradient id="ring-grad" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor={over ? '#ffc078' : '#b9f27c'} />
-          <stop offset="100%" stopColor={over ? '#ef6a22' : '#34c46a'} />
-        </linearGradient>
-        <radialGradient id="ring-core" cx="50%" cy="40%" r="60%">
-          <stop offset="0%" stopColor="#1f6a43" />
-          <stop offset="100%" stopColor="#0b3523" />
-        </radialGradient>
-      </defs>
-      <circle cx="110" cy="110" r="78" fill="url(#ring-core)" />
-      <circle cx="110" cy="110" r={r} fill="none" stroke="rgba(255,255,255,0.14)" strokeWidth="13" />
-      {pct > 0 && (
-        <circle cx="110" cy="110" r={r} fill="none" stroke="url(#ring-grad)" strokeWidth="13" strokeLinecap="round"
-          strokeDasharray={`${pct * c} ${c}`} transform="rotate(-90 110 110)" style={{ transition: 'stroke-dasharray 0.4s' }} />
-      )}
-    </svg>
+    <div className="segments" aria-hidden>
+      {Array.from({ length: n }, (_, i) => {
+        const part = Math.max(0, Math.min(1, filled - i))
+        const style = part >= 1 ? { background: 'var(--lime)' }
+          : part > 0 ? { background: `linear-gradient(90deg, var(--lime) ${part * 100}%, var(--line) ${part * 100}%)` }
+          : undefined
+        return <span key={i} style={style} />
+      })}
+    </div>
   )
 }
 
-function MacroTile({ icon, tone, label, value, target }: { icon: ReactNode; tone: string; label: string; value: number; target: number }) {
+function Stat({ label, value, target, color }: { label: string; value: number; target: number; color: string }) {
   const pct = target > 0 ? Math.min(100, (value / target) * 100) : 0
   return (
-    <div className="tile">
-      <span className={`tile-icon tile-icon--${tone}`}>{icon}</span>
-      <span className="tile-label">{label}</span>
-      <span className="tile-value">{value} g</span>
-      <span className="tile-share">/ {target} g</span>
-      <span className={`tile-bar tile-bar--${tone}`}><span style={{ width: `${pct}%` }} /></span>
+    <div className="stat">
+      <span className="caps">{label}</span>
+      <span className="stat-val">{value}<small> /{target}</small></span>
+      <span className="bar"><span style={{ width: `${pct}%`, background: color }} /></span>
     </div>
   )
 }
 
 function CompareCol({ label, m }: { label: string; m: Macros }) {
   return (
-    <div className="compare-col">
-      <span className="compare-label">{label}</span>
-      <strong>{m.kcal} kcal</strong>
+    <div>
+      <span className="caps">{label}</span>
+      <span className="d">{m.kcal}</span>
       <span className="small muted">P {m.protein} · G {m.carbs} · L {m.fat}</span>
     </div>
   )
@@ -83,13 +71,13 @@ export function TrackerScreen({ settings }: { settings: Settings }) {
   const t = targetsForDate(day, settings)
   const training = isTrainingDay(day, settings.trainingDays)
   const consumed = roundMacros(totalOf(entries))
-  const pct = Math.round((consumed.kcal / t.kcal) * 100)
   const plannedTotal = roundMacros(dayTotal(planned, planner.byId))
   const plannedSorted = [...planned].sort((a, b) => SLOT_ORDER.indexOf(a.slot) - SLOT_ORDER.indexOf(b.slot))
+  const eatenIds = new Set(entries.map((e) => e.fromPlannedMealId).filter(Boolean))
+  const next = plannedSorted.find((m) => !eatenIds.has(m.id) && planner.byId.has(m.recipeId))
   const extra = entries
     .filter((e) => !e.fromPlannedMealId)
     .sort((a, b) => SLOT_ORDER.indexOf(a.slot ?? 'snack') - SLOT_ORDER.indexOf(b.slot ?? 'snack') || a.createdAt - b.createdAt)
-  const eatenCount = entries.filter((e) => e.fromPlannedMealId).length
 
   const togglePlanned = async (mealId: string) => {
     const existing = entries.find((e) => e.fromPlannedMealId === mealId)
@@ -99,112 +87,125 @@ export function TrackerScreen({ settings }: { settings: Settings }) {
     if (meal && recipe) await db.logEntries.add(entryFromPlanned(meal, recipe))
   }
 
+  // Phrase d'aide sous la jauge : ce qu'il manque et ce que le prochain repas prévu apporte.
+  const leftP = Math.max(0, t.protein - consumed.protein)
+  const leftK = t.kcal - consumed.kcal
+  const nextP = next ? Math.round(scaleMacros(planner.byId.get(next.recipeId)!.perServing, next.portionFactor).protein) : 0
+  let hint: ReactNode
+  if (leftP === 0) hint = <>Objectif protéines atteint{leftK > 0 ? <>, encore <strong>{leftK} kcal</strong> dans ta cible.</> : '.'}</>
+  else if (next) {
+    hint = <>Encore <strong>{leftP} g</strong>. {SLOT_THE[next.slot]} prévu {Math.abs(nextP - leftP) <= 3 ? 'les apporte pile.' : `en apporte ${nextP} g.`}</>
+  } else hint = <>Encore <strong>{leftP} g</strong> pour atteindre ta cible.</>
+
+  const subtitle = offset === 0
+    ? `${clean(SUB_FMT.format(day))} · ${training ? 'Entraînement' : 'Repos'}`
+    : training ? 'Entraînement' : 'Repos'
+
   return (
     <>
       <ScreenHeader
-        title="Tracker"
-        subtitle="Suivez votre progression en temps réel"
-        action={<RoundButton label="Revenir à aujourd'hui" onClick={() => setOffset(0)}><CalendarIcon size={22} /></RoundButton>}
+        title={offset === 0 ? 'Aujourd\'hui' : TITLE_FMT.format(day)}
+        subtitle={<>{subtitle}{offset !== 0 && <button className="text-link" onClick={() => setOffset(0)}>· Aujourd'hui</button>}</>}
+        dot={training}
+        action={<>
+          <SquareButton label="Jour précédent" onClick={() => setOffset((o) => o - 1)}><BackIcon /></SquareButton>
+          <SquareButton label="Jour suivant" onClick={() => setOffset((o) => o + 1)}><ChevronIcon size={20} /></SquareButton>
+        </>}
       >
-        <div className="ring-wrap">
-          <Ring value={consumed.kcal} target={t.kcal} />
-          <div className="ring-center">
-            <span className="flame flame--lg"><FlameIcon size={26} /></span>
-            <span className="ring-value">{consumed.kcal}</span>
-            <span className="ring-target">/ {t.kcal} kcal</span>
-            <span className="ring-pill">{pct}%</span>
+        <div className="protein-hero">
+          <span className="caps caps--lime" style={{ fontSize: 12, letterSpacing: '0.14em' }}>Protéines</span>
+          <div className="num">
+            <span className="big">{consumed.protein}</span>
+            <span className="of">/ {t.protein} g</span>
           </div>
+          <Segments value={consumed.protein} target={t.protein} />
+          <p>{hint}</p>
         </div>
-        <p className="ring-hint">{remainingLabel(consumed, t)}</p>
       </ScreenHeader>
 
-      <section className="screen screen--overlap">
-        <div className="week-nav">
-          <button className="icon-plain" aria-label="Jour précédent" onClick={() => setOffset((o) => o - 1)}><BackIcon size={20} /></button>
-          <span className="day-nav-label">
-            {offset === 0 ? 'Aujourd\'hui' : DATE_FMT.format(day)}
-            <span className={`tag ${training ? 'tag--training' : 'tag--rest'}`}>{training ? 'Entraînement' : 'Repos'}</span>
-          </span>
-          <button className="icon-plain" aria-label="Jour suivant" onClick={() => setOffset((o) => o + 1)}><ChevronIcon size={20} /></button>
+      <section className="screen">
+        <div className="stat-grid" style={{ marginTop: 26 }}>
+          <Stat label="Kcal" value={consumed.kcal} target={t.kcal} color="var(--text)" />
+          <Stat label="Glucides" value={consumed.carbs} target={t.carbs} color="var(--cyan)" />
+          <Stat label="Lipides" value={consumed.fat} target={t.fat} color="var(--amber)" />
         </div>
 
-        <div className="tiles">
-          <MacroTile icon={<FlameIcon />} tone="protein" label="Protéines" value={consumed.protein} target={t.protein} />
-          <MacroTile icon={<LeafIcon />} tone="carbs" label="Glucides" value={consumed.carbs} target={t.carbs} />
-          <MacroTile icon={<DropIcon />} tone="fat" label="Lipides" value={consumed.fat} target={t.fat} />
+        <div className="section-label">
+          <span>Repas du jour</span>
+          {planned.length > 0 && <span className="count">{eatenIds.size}/{planned.length}</span>}
         </div>
 
-        <div className="section-head">
-          <h2>Repas prévus</h2>
-          {planned.length > 0 && <span className="muted small">{eatenCount} / {planned.length} mangés</span>}
-        </div>
         {plannedSorted.length === 0 ? (
-          <div className="card empty empty--sm">
-            <p className="muted">Aucun repas planifié ce jour-là. Génère la semaine dans l'onglet Planning, ou ajoute ce que tu manges ci-dessous.</p>
+          <div className="card empty">
+            <p>Aucun repas planifié ce jour-là. Génère la semaine dans Planning, ou ajoute ce que tu manges.</p>
           </div>
         ) : (
-          <ul className="card meal-list">
+          <div className="timeline">
             {plannedSorted.map((m) => {
               const r = planner.byId.get(m.recipeId)
-              const eaten = entries.some((e) => e.fromPlannedMealId === m.id)
+              const eaten = eatenIds.has(m.id)
+              const isNext = next?.id === m.id
               const mm = r ? roundMacros(scaleMacros(r.perServing, m.portionFactor)) : null
+              const after = m.slot === 'breakfast' && training && settings.trainingTime === 'morning' ? ' · après séance' : ''
               return (
-                <li key={m.id} className={`meal-row ${eaten ? 'meal-row--eaten' : ''}`}>
-                  <span className="meal-thumb">{r && <Bowl variant={bowlFor(r.name, r.slots)} size={56} />}</span>
-                  <span className="meal-info">
-                    <span className="plan-meal-slot">{SLOT_LABEL[m.slot]}</span>
-                    <strong>{r?.name ?? 'Recette supprimée'}</strong>
-                    {mm && <span className="muted small">{fmtFactor(m.portionFactor)} · {mm.kcal} kcal · P {mm.protein} g</span>}
-                  </span>
+                <div key={m.id} className={`tl-row ${eaten ? 'tl-row--done' : ''} ${isNext ? 'tl-row--next' : ''}`}>
                   <button
-                    className={`check-btn ${eaten ? 'check-btn--on' : ''}`}
+                    className={`tl-node ${eaten ? 'tl-node--on' : ''} ${isNext ? 'tl-node--next' : ''}`}
                     aria-pressed={eaten}
                     aria-label={eaten ? `Annuler : ${r?.name ?? 'repas'} mangé` : `Marquer ${r?.name ?? 'le repas'} comme mangé`}
                     disabled={!r}
                     onClick={() => togglePlanned(m.id)}
                   >
-                    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden><path d="M6 12.5l4 4L18 8.5" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                    <span>{eaten && <CheckIcon />}</span>
                   </button>
-                </li>
+                  <div className="tl-body">
+                    <span className="caps">{SLOT_SHORT[m.slot]}{isNext ? ' · suivant' : after}</span>
+                    <strong>{r?.name ?? 'Recette supprimée'}</strong>
+                    {isNext && mm && <span className="tl-meta">{fmtFactor(m.portionFactor)} · {mm.kcal} kcal · {mm.protein} g P</span>}
+                  </div>
+                  {isNext ? (
+                    <button className="btn btn--lime btn--sm" onClick={() => togglePlanned(m.id)}>Mangé</button>
+                  ) : mm && (
+                    <span className="tl-num">{mm.kcal}<br /><span className="lime">{mm.protein} g P</span></span>
+                  )}
+                </div>
               )
             })}
-          </ul>
+          </div>
         )}
 
         {extra.length > 0 && (
           <>
-            <div className="section-head"><h2>Hors plan</h2><span className="muted small">{extra.length} ajout{extra.length > 1 ? 's' : ''}</span></div>
-            <ul className="card ing-list">
+            <div className="section-label"><span>Hors plan</span><span className="count">{extra.length}</span></div>
+            <div className="card" style={{ padding: '4px 16px' }}>
               {extra.map((e) => {
                 const mm = roundMacros(e.macros)
                 return (
-                  <li key={e.id} className="ing-row">
-                    <span className="ing-name">
-                      <span className="plan-meal-slot">{e.slot ? SLOT_LABEL[e.slot] : 'Repas'}</span>
+                  <div key={e.id} className="extra-row">
+                    <div className="tl-body">
+                      <span className="caps">{e.slot ? SLOT_LABEL[e.slot] : 'Repas'}</span>
                       <strong>{e.name}</strong>
-                      <span className="small muted">
-                        {e.grams ? `${e.grams} g` : fmtFactor(e.portionFactor ?? 1)} · {mm.kcal} kcal · P {mm.protein} g
-                      </span>
-                    </span>
-                    <button className="remove-btn" aria-label={`Retirer ${e.name}`} onClick={() => db.logEntries.delete(e.id)}>×</button>
-                  </li>
+                      <span className="tl-meta">{e.grams ? `${e.grams} g` : fmtFactor(e.portionFactor ?? 1)} · {mm.kcal} kcal · {mm.protein} g P</span>
+                    </div>
+                    <button className="x-btn" aria-label={`Retirer ${e.name}`} onClick={() => db.logEntries.delete(e.id)}>×</button>
+                  </div>
                 )
               })}
-            </ul>
+            </div>
           </>
         )}
 
-        <button className="cta" onClick={() => setAdding(true)}>Ajouter un repas <PlusIcon /></button>
+        <button className="btn btn--outline btn--block" style={{ marginTop: 18 }} onClick={() => setAdding(true)}>
+          <PlusIcon /> Ajouter un repas
+        </button>
 
         {planned.length > 0 && (
           <>
-            <div className="section-head"><h2>Prévu / réel</h2></div>
+            <div className="section-label"><span>Prévu / réel</span></div>
             <div className="card compare">
-              <div className="compare-cols">
-                <CompareCol label="Prévu" m={plannedTotal} />
-                <span className="compare-sep" aria-hidden>→</span>
-                <CompareCol label="Réel" m={consumed} />
-              </div>
+              <CompareCol label="Prévu · kcal" m={plannedTotal} />
+              <ChevronIcon size={18} />
+              <CompareCol label="Réel · kcal" m={consumed} />
               <p className="compare-delta">
                 {entries.length === 0
                   ? 'Rien de saisi pour l\'instant.'

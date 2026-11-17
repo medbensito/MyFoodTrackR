@@ -19,7 +19,7 @@ export function TabBar({ active, onChange }: { active: Tab; onChange: (t: Tab) =
           aria-current={active === id ? 'page' : undefined}
           onClick={() => onChange(id)}
         >
-          <Icon filled={active === id} />
+          <Icon size={22} active={active === id} />
           <span>{label}</span>
         </button>
       ))}
