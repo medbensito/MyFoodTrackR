@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { initialFoods } from '../db/seed'
 import { SAMPLE_RECIPES } from '../db/sampleRecipes'
-import { buildShoppingList, formatGrams, roundForShopping, shoppingText } from './shopping'
+import { buildShoppingList, formatGrams, roundForShopping, shoppingText, shoppingTotal } from './shopping'
+import { PRICES } from '../db/prices'
 
-const foods = new Map(initialFoods().map((f) => [f.id, f]))
+const foods = new Map(initialFoods().map((f) => [f.id, { ...f, pricePerKg: PRICES[f.id] }]))
 const recipes = new Map(SAMPLE_RECIPES.map((r) => [r.id, r]))
 
 describe('arrondis', () => {
@@ -56,5 +57,17 @@ describe('buildShoppingList', () => {
     expect(txt).toContain('CRÈMERIE')
     expect(txt).toContain('Yaourt grec 0 % — 200 g')
     expect(txt).not.toContain('Amandes')
+  })
+  it('donne le poids à acheter et le coût', () => {
+    const { groups } = buildShoppingList([{ recipeId: 'ex-poulet-riz-brocoli', portionFactor: 1 }], recipes, foods)
+    const all = groups.flatMap((g) => g.items)
+    const poulet = all.find((i) => i.food.id === 'poulet-blanc-cuit')!
+    expect(poulet.buy).toEqual({ grams: 150, form: 'cru' }) // 110 g cuits → 148,5 g crus
+    expect(poulet.cost).toBeCloseTo(0.11 * 1.35 * 50)
+    const t = shoppingTotal(groups)
+    expect(t.unpriced).toBe(0)
+    expect(t.total).toBeGreaterThan(10)
+    expect(shoppingTotal(groups, new Set(['poulet-blanc-cuit'])).total).toBeCloseTo(t.total - poulet.cost!)
+    expect(shoppingText('Courses', groups, new Set())).toContain('Poulet, blanc cuit sans peau — 150 g cru (pour 110 g cuits)')
   })
 })

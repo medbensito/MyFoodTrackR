@@ -4,7 +4,8 @@ import { db } from '../db/db'
 import { useFoodsMap } from '../db/hooks'
 import { useNav } from '../nav'
 import { toISODate, weekDays } from '../lib/targets'
-import { buildShoppingList, formatGrams, shoppingText } from '../lib/shopping'
+import { buildShoppingList, formatGrams, shoppingText, shoppingTotal } from '../lib/shopping'
+import { fmtDh } from '../lib/cost'
 import { ScreenHeader, SquareButton } from '../components/ScreenHeader'
 import { CheckIcon, ShareIcon } from '../components/icons'
 
@@ -43,6 +44,9 @@ export function ShoppingScreen() {
 
   const list = buildShoppingList(meals, recipes, foods)
   const done = list.groups.flatMap((g) => g.items).filter((it) => checks.has(it.food.id)).length
+  const budget = shoppingTotal(list.groups)
+  const left = shoppingTotal(list.groups, checks)
+  const mealCount = meals.filter((m) => recipes.has(m.recipeId)).length
   const toDate = (iso: string) => { const [y, m, d] = iso.split('-').map(Number); return new Date(y, m - 1, d) }
   const rangeLabel = `${SHORT.format(toDate(dates[0])).replace('.', '')} — ${SHORT.format(toDate(dates[dates.length - 1])).replace('.', '')}`
 
@@ -85,6 +89,22 @@ export function ShoppingScreen() {
             {done > 0 && <button className="text-link" style={{ alignSelf: 'flex-start' }} onClick={uncheckAll}>Tout décocher</button>}
           </div>
         )}
+        {budget.priced > 0 && (
+          <div className="shop-budget">
+            <div>
+              <span className="caps">Budget estimé</span>
+              <span className="d">≈ {fmtDh(budget.total)}</span>
+            </div>
+            <div>
+              <span className="caps">Reste à acheter</span>
+              <span className="d">{fmtDh(left.total)}</span>
+            </div>
+            <div>
+              <span className="caps">Par repas</span>
+              <span className="d">{fmtDh(budget.total / Math.max(1, mealCount))}</span>
+            </div>
+          </div>
+        )}
         {copied && <p className="small ok" role="status" style={{ marginTop: 10 }}>{copied}</p>}
       </ScreenHeader>
 
@@ -106,12 +126,16 @@ export function ShoppingScreen() {
                     <span className="list-main">
                       <strong>{it.food.name}</strong>
                       <span className="caps">
-                        {it.food.state === 'cuit' ? 'poids cuit · ' : it.food.state === 'cru' ? 'cru · ' : ''}
+                        {it.buy ? `pour ${formatGrams(it.grams)} cuits · ` : it.food.state === 'cru' ? 'cru · ' : ''}
                         {it.uses} repas
                       </span>
                     </span>
                     <span className="shop-qty">
-                      {it.count ? <>{it.count.n}<small> {it.count.label}</small></> : formatGrams(it.grams)}
+                      <span>
+                        {it.buy ? <>{formatGrams(it.buy.grams)}<small> {it.buy.form}</small></>
+                          : it.count ? <>{it.count.n}<small> {it.count.label}</small></> : formatGrams(it.grams)}
+                      </span>
+                      {it.cost !== null && <span className="shop-cost">≈ {fmtDh(it.cost)}</span>}
                     </span>
                   </button>
                 )
@@ -120,7 +144,13 @@ export function ShoppingScreen() {
           </div>
         ))}
         {list.missingRecipes > 0 && <p className="footnote">{list.missingRecipes} repas utilisent une recette supprimée et ne sont pas comptés.</p>}
-        {list.itemCount > 0 && <p className="footnote">Quantités arrondies au-dessus. « Poids cuit » : prévois plus en cru pour la viande et le poisson.</p>}
+        {list.itemCount > 0 && (
+          <p className="footnote">
+            Quantités arrondies au-dessus, en poids à acheter (cru, sec ou entier). Prix indicatifs au Maroc (novembre 2026) : ajuste-les dans
+            {' '}<button className="link" onClick={() => nav.push({ type: 'foods' })}>la base d'aliments</button>.
+            {budget.unpriced > 0 && ` ${budget.unpriced} article${budget.unpriced > 1 ? 's' : ''} sans prix ne ${budget.unpriced > 1 ? 'sont' : 'est'} pas compté${budget.unpriced > 1 ? 's' : ''}.`}
+          </p>
+        )}
       </section>
     </>
   )

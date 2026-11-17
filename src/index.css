@@ -483,3 +483,12 @@ input, select, textarea { font: inherit; }
 .now-main strong svg { color: var(--muted); flex-shrink: 0; }
 .now-macros { font-size: 13px; color: var(--muted); }
 .now-add { flex-shrink: 0; background: var(--lime); color: var(--bg); border-color: var(--lime); }
+
+/* ——— coût des courses ——— */
+.shop-budget { margin-top: 14px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; background: var(--surface); border: 1px solid var(--line-soft); border-radius: 16px; padding: 12px 14px; }
+.shop-budget > div { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.shop-budget .d { font-family: var(--display); font-weight: 700; font-size: 22px; line-height: 1.1; white-space: nowrap; }
+.shop-budget > div:first-child .d { color: var(--lime); }
+.shop-qty { display: flex; flex-direction: column; align-items: flex-end; }
+.shop-cost { font-family: var(--body, inherit); font-size: 12px; font-weight: 500; color: var(--muted); letter-spacing: 0; margin-top: 2px; }
+.recipe-cost .d { color: var(--text); }

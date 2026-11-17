@@ -5,6 +5,7 @@ import { initialFoods } from './seed'
 import { SAMPLE_RECIPES } from './sampleRecipes'
 import { PACK_FOODS, PACK_RECIPES } from './pack'
 import { PACK3_FOODS, PACK3_RECIPES } from './pack3'
+import { PRICES } from './prices'
 import { LEGACY_V4 } from './legacyRecipes'
 import { DEFAULT_SETTINGS } from '../lib/targets'
 import Dexie from 'dexie'
@@ -128,5 +129,26 @@ describe('pack v3.2 (v9)', () => {
     expect((await db.recipes.get('p3-wrap-poulet'))?.steps?.length).toBeGreaterThan(3)
     expect(await db.extras.count()).toBe(0)
     db.close()
+  })
+})
+
+describe('prix (v10)', () => {
+  it('pré-remplit les prix sans écraser un prix saisi', async () => {
+    const name = 'test-v10-' + Math.random()
+    const v9 = new Dexie(name)
+    v9.version(9).stores({ foods: 'id, name, category, verified, barcode', recipes: 'id, name, *slots', plannedMeals: 'id, date, [date+slot]', logEntries: 'id, date', settings: 'id', shoppingChecks: 'id', dayOverrides: 'date', weighIns: 'date', extras: 'date' })
+    const seed = initialFoods()
+    await v9.table('foods').bulkAdd([{ ...seed.find((f) => f.id === 'riz-blanc-cru')!, pricePerKg: 19 }, seed.find((f) => f.id === 'banane')!, { ...seed[0], id: 'perso-x' }])
+    await v9.table('settings').add(DEFAULT_SETTINGS)
+    v9.close()
+    const db = new FoodTrackDB(name)
+    expect((await db.foods.get('riz-blanc-cru'))?.pricePerKg).toBe(19)
+    expect((await db.foods.get('banane'))?.pricePerKg).toBe(15)
+    expect((await db.foods.get('perso-x'))?.pricePerKg).toBeUndefined()
+    db.close()
+  })
+
+  it('chaque aliment fourni a un prix', () => {
+    for (const f of [...initialFoods(), ...PACK_FOODS, ...PACK3_FOODS]) expect(PRICES[f.id], f.id).toBeGreaterThan(0)
   })
 })

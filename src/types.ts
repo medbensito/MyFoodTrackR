@@ -17,6 +17,8 @@ export type Food = {
   favorite?: boolean
   /** EAN / UPC du produit scanné. */
   barcode?: string
+  /** Prix d'achat en DH par kg (ou par litre), tel qu'acheté (cru, sec…). */
+  pricePerKg?: number
 }
 
 export type MealSlot = 'breakfast' | 'lunch' | 'dinner' | 'snack'

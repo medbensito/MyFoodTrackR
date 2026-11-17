@@ -1,4 +1,6 @@
 import type { Food, PlannedMeal, Recipe } from '../types'
+import { BUY } from '../db/prices'
+import { costOf } from './cost'
 
 export type ShoppingItem = {
   food: Food
@@ -8,6 +10,10 @@ export type ShoppingItem = {
   count?: { n: number; label: string }
   /** Nombre de repas qui utilisent cet aliment. */
   uses: number
+  /** Ce qu'on achète vraiment quand l'aliment est compté cuit : poids cru, sec, entier… */
+  buy?: { grams: number; form: string }
+  /** Coût estimé en DH, ou null sans prix. */
+  cost: number | null
 }
 export type ShoppingGroup = { key: string; label: string; items: ShoppingItem[] }
 
@@ -72,8 +78,11 @@ export function buildShoppingList(
     const food = foods.get(foodId)!
     const grams = roundForShopping(t.grams)
     const label = COUNTABLE[foodId]
+    const b = BUY[foodId]
     const item: ShoppingItem = {
       food, grams, uses: t.uses,
+      buy: b && b.k !== 1 ? { grams: roundForShopping(grams * b.k), form: b.form } : undefined,
+      cost: costOf(food, grams),
       count: label && food.defaultPortionG > 0 ? { n: Math.ceil(t.grams / food.defaultPortionG - 0.05), label } : undefined,
     }
     const key = RAYONS.some((r) => r.key === food.category) ? food.category : 'autre'
@@ -87,8 +96,20 @@ export function buildShoppingList(
 }
 
 export function itemLabel(it: ShoppingItem): string {
+  if (it.buy) return `${it.food.name} — ${formatGrams(it.buy.grams)} ${it.buy.form} (pour ${formatGrams(it.grams)} cuits)`
   const qty = it.count ? `${it.count.n} ${it.count.label} (${formatGrams(it.grams)})` : formatGrams(it.grams)
   return `${it.food.name}${it.food.state === 'cuit' ? ' (poids cuit)' : it.food.state === 'cru' && it.food.category === 'feculents' ? ' (cru)' : ''} — ${qty}`
+}
+
+/** Total estimé ; `priced` : articles qui ont un prix. */
+export function shoppingTotal(groups: ShoppingGroup[], skip: Set<string> = new Set()): { total: number; priced: number; unpriced: number } {
+  let total = 0, priced = 0, unpriced = 0
+  for (const it of groups.flatMap((g) => g.items)) {
+    if (skip.has(it.food.id)) continue
+    if (it.cost === null) unpriced++
+    else { total += it.cost; priced++ }
+  }
+  return { total, priced, unpriced }
 }
 
 /** Version texte, pour l'envoyer par message. */

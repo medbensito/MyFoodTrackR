@@ -98,7 +98,7 @@ export function FoodsScreen() {
                   <span className="list-main">
                     <strong>{f.name}</strong>
                     <span className="caps" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                      {f.state} · G {f.carbs} · L {f.fat}
+                      {f.state} · G {f.carbs} · L {f.fat}{f.pricePerKg ? ` · ${f.pricePerKg} DH/kg` : ''}
                       {f.verified
                         ? <span className="verified" aria-label="Vérifié"><CheckCircleIcon size={15} filled /></span>
                         : <span className="tag tag--amber">à vérifier</span>}

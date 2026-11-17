@@ -9,6 +9,7 @@ import { ScreenHeader } from '../components/ScreenHeader'
 import { AddToPlanSheet } from '../components/AddToPlanSheet'
 import { CheckIcon, StarIcon } from '../components/icons'
 import { fmtMinutes, piecesLabel, stepParts, totalMinutes } from '../lib/steps'
+import { costOf, fmtDh, recipeCost } from '../lib/cost'
 
 export function RecipeDetailScreen({ id }: { id: string }) {
   const nav = useNav()
@@ -31,6 +32,7 @@ export function RecipeDetailScreen({ id }: { id: string }) {
   const slotsLabel = SLOT_ORDER.filter((s) => recipe.slots.includes(s)).map((s) => SLOT_LABEL[s]).join(' / ')
   const edit = () => nav.push({ type: 'recipe-edit', id })
   const ingFactor = factor / Math.max(1, recipe.servings)
+  const cost = recipeCost(recipe, foods)
 
   return (
     <>
@@ -49,11 +51,12 @@ export function RecipeDetailScreen({ id }: { id: string }) {
       <section className="screen" style={{ paddingBottom: 'calc(var(--safe-bottom) + 120px)' }}>
         <span className="caps caps--lime" style={{ fontSize: 12, letterSpacing: '0.14em' }}>Recette · {slotsLabel}</span>
         <h1 className="recipe-title">{recipe.name}</h1>
-        {totalMinutes(recipe) > 0 && (
+        {(totalMinutes(recipe) > 0 || cost.perServing > 0) && (
           <div className="recipe-time">
-            <div><span className="d">{fmtMinutes(totalMinutes(recipe))}</span><span className="caps">Total</span></div>
+            {totalMinutes(recipe) > 0 && <div><span className="d">{fmtMinutes(totalMinutes(recipe))}</span><span className="caps">Total</span></div>}
             {!!recipe.prepMin && <div><span className="d">{fmtMinutes(recipe.prepMin)}</span><span className="caps">Préparation</span></div>}
             {!!recipe.cookMin && <div><span className="d">{fmtMinutes(recipe.cookMin)}</span><span className="caps">Cuisson</span></div>}
+            {cost.perServing > 0 && <div className="recipe-cost"><span className="d">≈ {fmtDh(cost.perServing * factor)}</span><span className="caps">{factor === 1 ? 'La portion' : fmtFactor(factor)}</span></div>}
           </div>
         )}
 
@@ -110,7 +113,7 @@ export function RecipeDetailScreen({ id }: { id: string }) {
                   <strong>{food.name}</strong>
                   <span className="sub">{piecesLabel(ing.foodId, grams) ?? food.state}{!food.verified && <span className="tag tag--amber">à vérifier</span>}</span>
                 </span>
-                <span className="ing-num">{im.kcal}<br /><span className="lime">{im.protein} g P</span></span>
+                <span className="ing-num">{im.kcal}<br /><span className="lime">{im.protein} g P</span>{costOf(food, grams) !== null && <><br /><span className="muted">{fmtDh(costOf(food, grams)!)}</span></>}</span>
               </div>
             )
           })}

@@ -5,6 +5,8 @@ import type { Food, FoodState, Recipe } from '../types'
 import { CATEGORY_LABEL, kcalFromMacros, newId } from '../lib/nutrition'
 import { ScreenHeader } from '../components/ScreenHeader'
 import { StarIcon } from '../components/icons'
+import { BUY } from '../db/prices'
+import { fmtDh } from '../lib/cost'
 
 const STATES: FoodState[] = ['cru', 'cuit', 'conserve', 'liquide', 'solide', 'nature', 'sec']
 
@@ -45,14 +47,20 @@ export function FoodEditScreen({ id }: { id: string | null }) {
   const nums = [draft.kcal, draft.protein, draft.carbs, draft.fat]
   const numsOk = nums.every((n) => Number.isFinite(n) && n >= 0)
   const macroSumOk = !numsOk || draft.protein + draft.carbs + draft.fat <= 100
-  const valid = draft.name.trim().length > 0 && numsOk && macroSumOk && draft.defaultPortionG > 0
+  const priceOk = draft.pricePerKg === undefined || (Number.isFinite(draft.pricePerKg) && draft.pricePerKg >= 0)
+  const valid = draft.name.trim().length > 0 && numsOk && macroSumOk && draft.defaultPortionG > 0 && priceOk
+  const buy = BUY[draft.id]
+  const price = draft.pricePerKg && draft.pricePerKg > 0 ? draft.pricePerKg : null
 
   const computed = numsOk ? Math.round(kcalFromMacros(draft.protein, draft.carbs, draft.fat)) : null
   const gap = computed !== null && draft.kcal > 0 ? Math.abs(computed - draft.kcal) / draft.kcal : 0
 
   const save = async () => {
     if (!valid) return
-    await db.foods.put({ ...draft, id: draft.id || newId('perso'), name: draft.name.trim(), source: draft.source.trim() || 'saisie manuelle' })
+    await db.foods.put({
+      ...draft, id: draft.id || newId('perso'), name: draft.name.trim(), source: draft.source.trim() || 'saisie manuelle',
+      pricePerKg: draft.pricePerKg && draft.pricePerKg > 0 ? draft.pricePerKg : undefined,
+    })
     nav.pop()
   }
 
@@ -108,6 +116,20 @@ export function FoodEditScreen({ id }: { id: string | null }) {
             </p>
           )}
           {!macroSumOk && <p className="small error">Protéines + glucides + lipides dépassent 100 g.</p>}
+        </div>
+
+        <div className="card">
+          <h2>Prix</h2>
+          <Num label={buy ? `Prix d'achat (${buy.form})` : "Prix d'achat"} unit="DH/kg" value={draft.pricePerKg ?? NaN}
+            onChange={(v) => update({ pricePerKg: Number.isFinite(v) ? v : undefined })} />
+          <p className="muted small" style={{ marginTop: 8 }}>
+            {buy
+              ? `Prix au kilo tel que tu l'achètes. Pour 100 g comptés ici, il faut ≈ ${Math.round(buy.k * 100)} g ${buy.form}${price ? `, soit ≈ ${fmtDh((buy.k * 100 * price) / 1000)}` : ''}.`
+              : draft.id === 'oeuf-entier' && price
+                ? `Soit ≈ ${fmtDh((50 * price) / 1000)} l'œuf (50 g).`
+                : 'Prix au kilo (ou au litre) : il sert au budget de la liste de courses et au coût des recettes.'}
+          </p>
+          {!priceOk && <p className="small error">Prix invalide.</p>}
         </div>
 
         <div className="card">

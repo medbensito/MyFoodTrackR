@@ -5,6 +5,7 @@ import { initialFoods } from './seed'
 import { SAMPLE_RECIPES } from './sampleRecipes'
 import { PACK_FOODS, PACK_RECIPES } from './pack'
 import { PACK3_FOODS, PACK3_RECIPES } from './pack3'
+import { PRICES } from './prices'
 import { GUIDES, withGuide } from './guides'
 import { LEGACY_V4 } from './legacyRecipes'
 
@@ -107,9 +108,18 @@ export class FoodTrackDB extends Dexie {
         await recipes.bulkAdd(PACK3_RECIPES.filter((r) => !haveRecipes.has(r.id)).map((r) => withGuide(r)))
       })
 
+    // v10 : prix d'achat indicatifs (DH/kg), sans toucher à un prix déjà saisi.
+    this.version(10)
+      .stores({})
+      .upgrade(async (tx) => {
+        await tx.table('foods').toCollection().modify((f: Food) => {
+          if (f.pricePerKg === undefined && PRICES[f.id] !== undefined) f.pricePerKg = PRICES[f.id]
+        })
+      })
+
     // Exécuté une seule fois, à la création de la base sur l'appareil.
     this.on('populate', async (tx) => {
-      await tx.table('foods').bulkAdd([...initialFoods(), ...PACK_FOODS, ...PACK3_FOODS])
+      await tx.table('foods').bulkAdd([...initialFoods(), ...PACK_FOODS, ...PACK3_FOODS].map((f) => ({ ...f, pricePerKg: PRICES[f.id] })))
       await tx.table('recipes').bulkAdd([...SAMPLE_RECIPES, ...PACK_RECIPES, ...PACK3_RECIPES].map((r) => withGuide(r)))
       await tx.table('settings').add(DEFAULT_SETTINGS)
     })
