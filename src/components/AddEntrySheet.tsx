@@ -4,9 +4,10 @@ import { db } from '../db/db'
 import type { Food, LogEntry, MealSlot } from '../types'
 import type { PlannerRecipe } from '../lib/planner'
 import { fmtFactor, macrosForGrams, normalize, roundMacros, scaleMacros, SLOT_LABEL, SLOT_ORDER } from '../lib/nutrition'
+import { ScanSheet } from './ScanSheet'
 import { entryFromFood, entryFromRecipe, recentItems, slotForHour, type RecentItem } from '../lib/journal'
 import type { SlotNames } from '../lib/ramadan'
-import { BackIcon, ChevronIcon, PlusIcon, StarIcon } from './icons'
+import { BackIcon, ChevronIcon, PlusIcon, ScanIcon, StarIcon } from './icons'
 
 type Picked = { kind: 'recipe'; r: PlannerRecipe } | { kind: 'food'; f: Food }
 
@@ -22,6 +23,7 @@ export function AddEntrySheet({ date, recipes, foods, onAdd, onClose, names, def
 }) {
   const [mode, setMode] = useState<'recipe' | 'food'>('recipe')
   const [query, setQuery] = useState('')
+  const [scanning, setScanning] = useState(false)
   const [picked, setPicked] = useState<Picked | null>(null)
   const [slot, setSlot] = useState<MealSlot>(defaultSlot ?? slotForHour(new Date().getHours()))
   const order = names?.order ?? SLOT_ORDER
@@ -143,9 +145,12 @@ export function AddEntrySheet({ date, recipes, foods, onAdd, onClose, names, def
               <button role="tab" aria-selected={mode === 'recipe'} className={mode === 'recipe' ? 'seg--on' : ''} onClick={() => setMode('recipe')}>Recette</button>
               <button role="tab" aria-selected={mode === 'food'} className={mode === 'food' ? 'seg--on' : ''} onClick={() => setMode('food')}>Aliment</button>
             </div>
-            <input className="search" type="search" value={query} onChange={(e) => setQuery(e.target.value)}
-              aria-label={mode === 'recipe' ? 'Rechercher une recette' : 'Rechercher un aliment'}
-              placeholder={mode === 'recipe' ? 'Rechercher une recette' : 'Rechercher un aliment'} />
+            <div className="search-row">
+              <input className="search" type="search" value={query} onChange={(e) => setQuery(e.target.value)}
+                aria-label={mode === 'recipe' ? 'Rechercher une recette' : 'Rechercher un aliment'}
+                placeholder={mode === 'recipe' ? 'Rechercher une recette' : 'Rechercher un aliment'} />
+              <button className="sq-btn" aria-label="Scanner un code-barres" onClick={() => setScanning(true)}><ScanIcon size={20} /></button>
+            </div>
             <div className="list" style={{ marginTop: 6 }}>
               {mode === 'recipe'
                 ? recipeList.map((r) => {
@@ -213,6 +218,15 @@ export function AddEntrySheet({ date, recipes, foods, onAdd, onClose, names, def
           </>
         )}
       </div>
+      {scanning && (
+        <div onClick={(e) => e.stopPropagation()}>
+          <ScanSheet
+            saveLabel="Enregistrer et choisir la quantité"
+            onClose={() => setScanning(false)}
+            onFood={(f) => { setScanning(false); setMode('food'); pick({ kind: 'food', f }) }}
+          />
+        </div>
+      )}
     </div>
   )
 }

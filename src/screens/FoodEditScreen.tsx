@@ -124,6 +124,17 @@ export function FoodEditScreen({ id }: { id: string | null }) {
             <input type="checkbox" className="switch" checked={draft.verified}
               onChange={(e) => update({ verified: e.target.checked, source: e.target.checked && draft.source === 'approximation' ? 'Ciqual' : draft.source })} />
           </label>
+          {draft.barcode && (
+            <div className="field">
+              <span>Code-barres</span>
+              <span className="muted tnum">{draft.barcode}</span>
+            </div>
+          )}
+          {draft.barcode && (
+            <a className="ext-link" href={`https://world.openfoodfacts.org/product/${draft.barcode}`} target="_blank" rel="noreferrer">
+              Voir la fiche Open Food Facts ↗
+            </a>
+          )}
           <a className="ext-link" href="https://ciqual.anses.fr/" target="_blank" rel="noreferrer">
             Ouvrir la table Ciqual (ANSES) ↗
           </a>

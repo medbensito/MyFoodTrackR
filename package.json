@@ -1,7 +1,7 @@
 {
   "name": "myfoodtrackr",
   "private": true,
-  "version": "2.0.0",
+  "version": "3.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -13,10 +13,12 @@
   "dependencies": {
     "@fontsource/barlow-condensed": "^5.3.0",
     "@fontsource/inter": "^5.3.0",
+    "barcode-detector": "^3.2.4",
     "dexie": "^4.4.7",
     "dexie-react-hooks": "^4.4.0",
     "react": "^19.3.1",
-    "react-dom": "^19.3.1"
+    "react-dom": "^19.3.1",
+    "zxing-wasm": "^3.1.7"
   },
   "devDependencies": {
     "@types/node": "^24.19.2",

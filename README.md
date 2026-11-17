@@ -4,7 +4,14 @@ Design : direction A « Nuit athlétique » (fond noir, citron #C8F560, Barlow C
 
 PWA personnelle de nutrition : planning de la semaine, recettes avec macros, tracker de protéines. Tout est stocké localement sur l'appareil (IndexedDB).
 
-## État : v2.0.0
+## État : v3.0.0
+
+- Recettes rééquilibrées : une semaine générée tombe vers 145–180 g de protéines (cible 140 g), calories à ±85 kcal
+- Cibles adaptatives (Profil › Poids) : pesée hebdo, tendance sur 4 semaines, dépense réelle estimée depuis le journal, ajustement proposé (±200 kcal max, 1 fois tous les 14 jours)
+- Mode Ramadan (Réglages) : s'hour, ftour, collation du soir, dîner ; dates modifiables (prévision : 8 février – 9 mars 2027) ; séance avant ftour, après ftour ou aucune
+- Scan de code-barres (Aliments, et « Ajouter un repas ») : décodage ZXing embarqué (marche hors ligne), fiche Open Food Facts pré-remplie à vérifier, saisie manuelle du code ou de l'étiquette en repli ; un produit scanné une fois est reconnu sans réseau
+
+### v2.0.0
 
 - Liste de courses depuis le planning (rayons, cases à cocher, partage en texte)
 - Séance sautée ou ajoutée : change la cible du jour et peut recomposer les repas restants

@@ -15,6 +15,8 @@ export type Food = {
   verified: boolean
   custom: boolean
   favorite?: boolean
+  /** EAN / UPC du produit scanné. */
+  barcode?: string
 }
 
 export type MealSlot = 'breakfast' | 'lunch' | 'dinner' | 'snack'

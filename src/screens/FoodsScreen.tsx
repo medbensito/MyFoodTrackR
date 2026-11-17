@@ -4,7 +4,8 @@ import { useNav } from '../nav'
 import type { Food } from '../types'
 import { CATEGORY_LABEL, normalize } from '../lib/nutrition'
 import { ScreenHeader, SquareButton } from '../components/ScreenHeader'
-import { CheckCircleIcon, ChevronIcon, PlusIcon } from '../components/icons'
+import { CheckCircleIcon, ChevronIcon, PlusIcon, ScanIcon } from '../components/icons'
+import { ScanSheet } from '../components/ScanSheet'
 
 type Filter = 'all' | 'todo' | 'verified' | 'custom'
 const FILTERS: { id: Filter; label: string; test: (f: Food) => boolean }[] = [
@@ -19,6 +20,8 @@ export function FoodsScreen() {
   const foods = useFoods()
   const [filter, setFilter] = useState<Filter>('all')
   const [query, setQuery] = useState('')
+  const [scanning, setScanning] = useState(false)
+  const [found, setFound] = useState<string | null>(null)
 
   const groups = useMemo(() => {
     if (!foods) return undefined
@@ -43,7 +46,12 @@ export function FoodsScreen() {
         title="Aliments"
         subtitle="Valeurs pour 100 g"
         back={nav.pop}
-        backAction={<SquareButton label="Ajouter un aliment" onClick={create}><PlusIcon size={20} /></SquareButton>}
+        backAction={
+          <span className="head-nav-actions">
+            <SquareButton label="Scanner un code-barres" onClick={() => setScanning(true)}><ScanIcon size={20} /></SquareButton>
+            <SquareButton label="Ajouter un aliment" onClick={create}><PlusIcon size={20} /></SquareButton>
+          </span>
+        }
       >
         <div className="stat" style={{ gap: 10 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
@@ -72,6 +80,7 @@ export function FoodsScreen() {
       </ScreenHeader>
 
       <section className="screen">
+        {found && <p className="ok small" role="status" style={{ marginTop: 14 }}>{found}</p>}
         {groups?.length === 0 && (
           <div className="card empty" style={{ marginTop: 16 }}>
             <h2>Aucun aliment</h2>
@@ -103,6 +112,18 @@ export function FoodsScreen() {
           </div>
         ))}
       </section>
+
+      {scanning && (
+        <ScanSheet
+          onClose={() => setScanning(false)}
+          onFood={(f) => {
+            setScanning(false)
+            setFilter('all')
+            setQuery(f.name)
+            setFound(`« ${f.name} » est dans tes aliments.`)
+          }}
+        />
+      )}
     </>
   )
 }

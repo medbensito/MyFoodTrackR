@@ -31,7 +31,9 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,png,svg,json,woff2}'],
+        globPatterns: ['**/*.{js,css,html,png,svg,json,woff2,wasm}'],
+        // Le décodeur de codes-barres (ZXing, ~950 Ko) reste disponible hors ligne.
+        maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
         navigateFallback: 'index.html',
       },
     }),

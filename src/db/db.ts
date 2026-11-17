@@ -76,6 +76,8 @@ export class FoodTrackDB extends Dexie {
 
     // v6 : pesées pour les cibles adaptatives.
     this.version(6).stores({ weighIns: 'date' })
+    // v3.3 : aliments scannés, retrouvés par leur code-barres.
+    this.version(7).stores({ foods: 'id, name, category, verified, barcode' })
 
     // Exécuté une seule fois, à la création de la base sur l'appareil.
     this.on('populate', async (tx) => {

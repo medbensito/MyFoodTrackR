@@ -72,3 +72,9 @@ export const TrophyIcon = ({ size = 20 }: P) => (
 export const MoonIcon = ({ size = 22 }: P) => (
   <svg {...base(size)}><path d="M19.5 14.5A8 8 0 0 1 9.5 4.5a8 8 0 1 0 10 10z" /></svg>
 )
+export const ScanIcon = ({ size = 22 }: P) => (
+  <svg {...base(size)}>
+    <path d="M4 8V5.5A1.5 1.5 0 0 1 5.5 4H8M16 4h2.5A1.5 1.5 0 0 1 20 5.5V8M20 16v2.5a1.5 1.5 0 0 1-1.5 1.5H16M8 20H5.5A1.5 1.5 0 0 1 4 18.5V16" />
+    <path d="M8 8.5v7M11 8.5v7M13.5 8.5v7M16 8.5v7" />
+  </svg>
+)
