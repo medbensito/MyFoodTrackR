@@ -2,7 +2,7 @@
  * Illustration décorative d'un bol (pas de photo : l'app fonctionne hors ligne
  * et n'embarque aucune image externe). La variante change la garniture.
  */
-type Variant = 'chicken' | 'salmon' | 'salad' | 'pasta' | 'oats'
+export type Variant = 'chicken' | 'salmon' | 'salad' | 'pasta' | 'oats'
 
 const TOPPINGS: Record<Variant, { base: string; items: { x: number; y: number; r: number; c: string }[] }> = {
   chicken: {
@@ -70,3 +70,15 @@ export function Bowl({ variant = 'chicken', size = 88 }: { variant?: Variant; si
 }
 
 export const BOWL_VARIANTS: Variant[] = ['chicken', 'salad', 'salmon', 'pasta', 'oats']
+
+/** Choisit une illustration d'après le nom de la recette. */
+export function bowlFor(name: string, slots: string[] = []): Variant {
+  const n = name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+  if (/saumon|sardine|poisson|thon/.test(n) && !/pate/.test(n)) return 'salmon'
+  if (/pate|spaghetti|couscous|semoule/.test(n)) return 'pasta'
+  if (/porridge|avoine|flocon|pancake/.test(n)) return 'oats'
+  if (/salade|yaourt|fromage|fruit|pomme|lentille/.test(n)) return 'salad'
+  if (slots.includes('breakfast')) return 'oats'
+  if (slots.includes('snack')) return 'salad'
+  return 'chicken'
+}

@@ -1,11 +1,11 @@
 import { useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db/db'
+import { useNav } from '../nav'
 import { buildMacros } from '../lib/targets'
 import type { Macros, Settings, TrainingTime } from '../types'
 import { GOAL_LABEL } from '../lib/labels'
-import { RoundButton, ScreenHeader } from '../components/ScreenHeader'
-import { BackIcon } from '../components/icons'
+import { ScreenHeader } from '../components/ScreenHeader'
 
 // Affichage lundi → dimanche, valeurs JS getDay()
 const DAYS: { value: number; label: string }[] = [
@@ -69,6 +69,7 @@ function isValid(s: Settings): boolean {
 const GOALS = (Object.keys(GOAL_LABEL) as Settings['goal'][]).map((g) => ({ value: g, label: GOAL_LABEL[g].short }))
 
 export function SettingsScreen({ settings, onBack }: { settings: Settings; onBack: () => void }) {
+  const nav = useNav()
   const [draft, setDraft] = useState<Settings>(settings)
   const [saved, setSaved] = useState(false)
   const foodStats = useLiveQuery(async () => {
@@ -96,7 +97,7 @@ export function SettingsScreen({ settings, onBack }: { settings: Settings; onBac
     <ScreenHeader
       title="Réglages"
       subtitle="Profil, entraînement et cibles"
-      action={<RoundButton label="Retour" onClick={onBack}><BackIcon size={22} /></RoundButton>}
+      back={onBack}
     />
     <section className="screen">
       <div className="card">
@@ -164,7 +165,8 @@ export function SettingsScreen({ settings, onBack }: { settings: Settings; onBac
         <p>
           {foodStats ? `${foodStats.total} aliments · ${foodStats.verified} vérifiés` : '…'}
         </p>
-        <p className="muted small">La gestion des aliments arrive au jalon M1, la sauvegarde au jalon M4.</p>
+        <button className="secondary" onClick={() => nav.push({ type: 'foods' })}>Gérer les aliments</button>
+        <p className="muted small">La sauvegarde (export / import) arrive au jalon M4.</p>
       </div>
 
       <div className="save-bar">

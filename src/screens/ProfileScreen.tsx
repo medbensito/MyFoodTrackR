@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db/db'
+import { useNav } from '../nav'
 import type { Settings } from '../types'
 import { GOAL_LABEL, TIME_LABEL, trainingDaysLabel } from '../lib/labels'
 import { RoundButton, ScreenHeader } from '../components/ScreenHeader'
@@ -31,7 +32,9 @@ function PrefRow({ icon, label, value, onClick }: { icon: ReactNode; label: stri
   )
 }
 
-export function ProfileScreen({ settings, onOpenSettings }: { settings: Settings; onOpenSettings: () => void }) {
+export function ProfileScreen({ settings }: { settings: Settings }) {
+  const nav = useNav()
+  const onOpenSettings = () => nav.push({ type: 'settings' })
   const foodStats = useLiveQuery(async () => {
     const all = await db.foods.toArray()
     return { total: all.length, verified: all.filter((f) => f.verified).length }
@@ -84,7 +87,7 @@ export function ProfileScreen({ settings, onOpenSettings }: { settings: Settings
             <PrefRow
               icon={<DatabaseIcon />} label="Base d'aliments"
               value={foodStats ? `${foodStats.total} aliments · ${foodStats.verified} vérifiés` : '…'}
-              onClick={onOpenSettings}
+              onClick={() => nav.push({ type: 'foods' })}
             />
           </ul>
         </div>

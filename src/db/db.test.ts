@@ -2,6 +2,9 @@ import 'fake-indexeddb/auto'
 import { describe, expect, it } from 'vitest'
 import { FoodTrackDB } from './db'
 import { initialFoods } from './seed'
+import { SAMPLE_RECIPES } from './sampleRecipes'
+import { DEFAULT_SETTINGS } from '../lib/targets'
+import Dexie from 'dexie'
 
 describe('base locale', () => {
   it('importe les aliments et les réglages au premier lancement', async () => {
@@ -12,6 +15,27 @@ describe('base locale', () => {
     expect(settings?.trainingTime).toBe('morning')
     const poulet = await db.foods.get('poulet-blanc-cuit')
     expect(poulet).toMatchObject({ name: 'Poulet, blanc cuit sans peau', protein: 31, verified: false, custom: false })
+    db.close()
+  })
+
+  it('crée les recettes d\'exemple sur une base neuve', async () => {
+    const db = new FoodTrackDB('test-' + Math.random())
+    expect(await db.recipes.count()).toBe(SAMPLE_RECIPES.length)
+    db.close()
+  })
+
+  it('ajoute les recettes d\'exemple à une base créée en M0', async () => {
+    const name = 'test-upgrade-' + Math.random()
+    const v1 = new Dexie(name)
+    v1.version(1).stores({ foods: 'id, name, category, verified', recipes: 'id, name, *slots', plannedMeals: 'id, date, [date+slot]', logEntries: 'id, date', settings: 'id' })
+    await v1.table('settings').add({ ...DEFAULT_SETTINGS, name: undefined, goal: undefined })
+    v1.close()
+
+    const db = new FoodTrackDB(name)
+    expect(await db.recipes.count()).toBe(SAMPLE_RECIPES.length)
+    const s = await db.settings.get('main')
+    expect(s?.name).toBe(DEFAULT_SETTINGS.name)
+    expect(s?.goal).toBe('recomposition')
     db.close()
   })
 

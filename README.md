@@ -2,7 +2,13 @@
 
 PWA personnelle de nutrition : planning de la semaine, recettes avec macros, tracker de protéines. Tout est stocké localement sur l'appareil (IndexedDB).
 
-## État : jalon M0 — Socle
+## État : jalon M1 — Aliments et recettes
+
+- Base d'aliments : recherche, filtres, édition, marquer comme vérifié, ajout d'aliments perso, suppression bloquée si utilisé dans une recette
+- Recettes : liste filtrable par créneau, recherche, fiche détaillée, éditeur avec macros en direct
+- 11 recettes d'exemple (ajoutées aussi aux installations M0 via la migration v2)
+
+### Jalon M0 — Socle
 
 - Projet Vite + React + TypeScript
 - PWA installable, fonctionnement hors ligne (service worker généré par `vite-plugin-pwa`)
