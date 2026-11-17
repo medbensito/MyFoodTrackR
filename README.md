@@ -2,7 +2,13 @@
 
 PWA personnelle de nutrition : planning de la semaine, recettes avec macros, tracker de protéines. Tout est stocké localement sur l'appareil (IndexedDB).
 
-## État : jalon M3 — Tracker
+## État : v1.0.0 — jalon M4 terminé
+
+- Sauvegarde : export JSON (feuille de partage iOS → « Enregistrer dans Fichiers », sinon téléchargement), import vérifié avec confirmation, date du dernier export et rappel après 7 jours
+- Installation : statut plein écran, hors ligne et stockage protégé dans Réglages ; demande de stockage persistant au lancement
+- Testé : rechargement de l'app sans connexion
+
+### Jalon M3 — Tracker
 
 - Journal du jour avec instantané des macros (une recette modifiée plus tard ne change pas l'historique)
 - Repas planifiés cochables (« Mangé ») depuis le Tracker ou la feuille repas du Planning

@@ -517,3 +517,15 @@ h1, h2, h3, p { margin: 0; }
 .eaten-btn:disabled { opacity: 0.4; }
 .eaten-check { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; border: 2px solid currentColor; }
 .eaten-tag { font-size: 0.65rem; padding: 1px 6px; border-radius: 999px; background: var(--accent); color: #fff; letter-spacing: 0.02em; }
+
+/* ——— M4 : sauvegarde et installation ——— */
+.backup-actions { display: flex; gap: 10px; margin-top: 12px; }
+.backup-actions .primary, .backup-actions .secondary { flex: 1; margin-top: 0; padding: 12px; }
+.import-confirm { margin-top: 12px; padding: 12px; border-radius: 14px; background: var(--protein-soft); font-size: 0.9rem; line-height: 1.45; }
+.import-confirm .danger-actions { justify-content: flex-end; }
+.status-row { display: flex; align-items: flex-start; gap: 12px; padding: 10px 0; border-top: 1px solid var(--border); }
+.card > h2 + .status-row { border-top: 0; }
+.status-dot { width: 10px; height: 10px; border-radius: 50%; margin-top: 6px; flex-shrink: 0; background: var(--border); }
+.status-dot--ok { background: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); }
+.status-dot--warn { background: var(--protein); box-shadow: 0 0 0 4px var(--protein-soft); }
+.card .ok, .card .warn { margin-top: 0; }

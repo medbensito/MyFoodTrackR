@@ -69,4 +69,6 @@ export type Settings = {
   trainingTime: TrainingTime
   targets: { rest: Macros; training: Macros }
   maxRepeatsPerWeekPerSlot: number
+  /** Date du dernier export de sauvegarde (ms). */
+  lastExportAt?: number
 }

@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db/db'
 import { useNav } from '../nav'
+import { BackupCard } from '../components/BackupCard'
+import { InstallCard } from '../components/InstallCard'
 import { buildMacros } from '../lib/targets'
 import type { Macros, Settings, TrainingTime } from '../types'
 import { GOAL_LABEL } from '../lib/labels'
@@ -82,13 +84,15 @@ export function SettingsScreen({ settings, onBack }: { settings: Settings; onBac
     const has = draft.trainingDays.includes(day)
     update({ trainingDays: has ? draft.trainingDays.filter((d) => d !== day) : [...draft.trainingDays, day] })
   }
-  const dirty = JSON.stringify(draft) !== JSON.stringify(settings)
+  // La date d'export est gérée à part : elle ne doit ni rendre le formulaire « modifié », ni être écrasée.
+  const comparable = (x: Settings) => JSON.stringify({ ...x, lastExportAt: undefined })
+  const dirty = comparable(draft) !== comparable(settings)
   const valid = isValid(draft)
   const proteinPerKg = draft.weightKg > 0 ? (draft.targets.training.protein / draft.weightKg).toFixed(1) : '—'
 
   const save = async () => {
     if (!valid) return
-    await db.settings.put(draft)
+    await db.settings.put({ ...draft, lastExportAt: settings.lastExportAt })
     setSaved(true)
   }
 
@@ -166,14 +170,17 @@ export function SettingsScreen({ settings, onBack }: { settings: Settings; onBac
           {foodStats ? `${foodStats.total} aliments · ${foodStats.verified} vérifiés` : '…'}
         </p>
         <button className="secondary" onClick={() => nav.push({ type: 'foods' })}>Gérer les aliments</button>
-        <p className="muted small">La sauvegarde (export / import) arrive au jalon M4.</p>
       </div>
+
 
       <div className="save-bar">
         {!valid && <span className="error small">Certaines valeurs sont vides ou invalides.</span>}
         {saved && !dirty && <span className="ok small">Enregistré</span>}
         <button className="primary" disabled={!dirty || !valid} onClick={save}>Enregistrer</button>
       </div>
+
+      <BackupCard lastExportAt={settings.lastExportAt} />
+      <InstallCard />
     </section>
     </>
   )
