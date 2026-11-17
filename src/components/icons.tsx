@@ -57,3 +57,15 @@ export const SaveIcon = ({ size = 22 }: P) => <svg {...base(size)}><path d="M12 
 export const TargetIcon = ({ size = 26 }: P) => (
   <svg {...base(size)} strokeWidth={2}><circle cx="11" cy="13" r="8" /><circle cx="11" cy="13" r="4.2" /><path d="M11 13l9-9M16.5 4h3.5v3.5" /></svg>
 )
+export const CartIcon = ({ size = 20 }: P) => (
+  <svg {...base(size)}><path d="M3 4h2.2l2.1 11h10.4l2-8H6.4" /><circle cx="9" cy="19.5" r="1.4" /><circle cx="17" cy="19.5" r="1.4" /></svg>
+)
+export const ShareIcon = ({ size = 20 }: P) => (
+  <svg {...base(size)}><path d="M12 15V3.5M7.5 8L12 3.5 16.5 8" /><path d="M5 12v6.5A1.5 1.5 0 0 0 6.5 20h11a1.5 1.5 0 0 0 1.5-1.5V12" /></svg>
+)
+export const StarIcon = ({ size = 20, filled }: P) => (
+  <svg {...base(size)} strokeWidth={1.9}><path d="M12 3.6l2.6 5.3 5.8.8-4.2 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z" fill={filled ? 'currentColor' : 'none'} /></svg>
+)
+export const TrophyIcon = ({ size = 20 }: P) => (
+  <svg {...base(size)}><path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8.5 20h7M10 17h4v3h-4z" /></svg>
+)

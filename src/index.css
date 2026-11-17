@@ -345,3 +345,11 @@ input, select, textarea { font: inherit; }
 }
 .tab { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; min-height: 54px; background: none; border: 0; color: var(--muted); font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
 .tab--active { color: var(--lime); font-weight: 700; }
+
+/* ——— v2 : courses ——— */
+.shop-row { width: 100%; display: flex; align-items: center; gap: 10px; min-height: 60px; padding: 6px 0; border: 0; border-bottom: 1px solid var(--line-soft); background: transparent; color: inherit; text-align: left; }
+.shop-row .tl-node { pointer-events: none; }
+.shop-row--on .list-main strong { color: var(--muted); text-decoration: line-through; text-decoration-color: #4a534c; }
+.shop-row--on .shop-qty { color: var(--muted); }
+.shop-qty { font-family: var(--display); font-weight: 700; font-size: 22px; text-align: right; flex-shrink: 0; white-space: nowrap; }
+.shop-qty small { font-size: 15px; color: var(--muted); font-weight: 600; }

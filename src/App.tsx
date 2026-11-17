@@ -12,6 +12,7 @@ import { FoodsScreen } from './screens/FoodsScreen'
 import { FoodEditScreen } from './screens/FoodEditScreen'
 import { RecipeDetailScreen } from './screens/RecipeDetailScreen'
 import { RecipeEditScreen } from './screens/RecipeEditScreen'
+import { ShoppingScreen } from './screens/ShoppingScreen'
 
 export default function App() {
   const [tab, setTab] = useState<Tab>('planning')
@@ -39,6 +40,7 @@ export default function App() {
   else if (top?.type === 'food') screen = <FoodEditScreen key={top.id ?? 'new'} id={top.id} />
   else if (top?.type === 'recipe') screen = <RecipeDetailScreen key={top.id} id={top.id} />
   else if (top?.type === 'recipe-edit') screen = <RecipeEditScreen key={top.id ?? 'new'} id={top.id} />
+  else if (top?.type === 'shopping') screen = <ShoppingScreen />
   else if (tab === 'planning') screen = <PlanningScreen settings={settings} />
   else if (tab === 'recipes') screen = <RecipesScreen />
   else if (tab === 'tracker') screen = <TrackerScreen settings={settings} />

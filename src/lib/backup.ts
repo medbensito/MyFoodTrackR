@@ -1,4 +1,4 @@
-import type { Food, LogEntry, PlannedMeal, Recipe, Settings } from '../types'
+import type { DayOverride, Food, LogEntry, PlannedMeal, Recipe, Settings, ShoppingCheck } from '../types'
 
 export const BACKUP_APP = 'MyFoodTrackR'
 export const BACKUP_VERSION = 1
@@ -9,11 +9,14 @@ export type BackupData = {
   plannedMeals: PlannedMeal[]
   logEntries: LogEntry[]
   settings: Settings[]
+  /** Ajoutés en v2 de l'app : absents des sauvegardes plus anciennes. */
+  dayOverrides?: DayOverride[]
+  shoppingChecks?: ShoppingCheck[]
 }
 
 export type Backup = { app: string; version: number; exportedAt: string; data: BackupData }
 
-export type BackupCounts = Record<keyof BackupData, number>
+export type BackupCounts = Record<'foods' | 'recipes' | 'plannedMeals' | 'logEntries' | 'settings', number>
 
 export function buildBackup(data: BackupData, now = new Date()): Backup {
   return { app: BACKUP_APP, version: BACKUP_VERSION, exportedAt: now.toISOString(), data }
@@ -53,7 +56,7 @@ export function parseBackup(text: string): ParseResult {
   const d = raw.data
   if (!isObj(d)) return { ok: false, error: 'Sauvegarde incomplète : données manquantes.' }
 
-  const keys: (keyof BackupData)[] = ['foods', 'recipes', 'plannedMeals', 'logEntries', 'settings']
+  const keys = ['foods', 'recipes', 'plannedMeals', 'logEntries', 'settings'] as const
   for (const k of keys) {
     if (!Array.isArray(d[k])) return { ok: false, error: `Sauvegarde incomplète : « ${k} » manquant.` }
     if (!(d[k] as unknown[]).every(hasId)) return { ok: false, error: `Sauvegarde abîmée : un élément de « ${k} » n'a pas d'identifiant.` }
@@ -68,6 +71,9 @@ export function parseBackup(text: string): ParseResult {
   }
   if (!data.logEntries.every((e) => isObj(e.macros) && num(e.macros.kcal))) {
     return { ok: false, error: 'Sauvegarde abîmée : une entrée du journal est invalide.' }
+  }
+  for (const k of ['dayOverrides', 'shoppingChecks'] as const) {
+    if (d[k] !== undefined && !Array.isArray(d[k])) return { ok: false, error: `Sauvegarde abîmée : « ${k} » invalide.` }
   }
   if (!data.settings.some((s) => s.id === 'main')) return { ok: false, error: 'Sauvegarde incomplète : réglages manquants.' }
 

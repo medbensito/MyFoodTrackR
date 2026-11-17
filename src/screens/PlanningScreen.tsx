@@ -12,7 +12,7 @@ import {
 } from '../lib/planner'
 import { ScreenHeader, SquareButton } from '../components/ScreenHeader'
 import { MealSheet } from '../components/MealSheet'
-import { BackIcon, CheckIcon, ChevronIcon, PinIcon, PlusIcon, RefreshIcon } from '../components/icons'
+import { BackIcon, CartIcon, CheckIcon, ChevronIcon, PinIcon, PlusIcon, RefreshIcon } from '../components/icons'
 
 const DN = ['DIM', 'LUN', 'MAR', 'MER', 'JEU', 'VEN', 'SAM']
 const LONG = new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric' })
@@ -129,6 +129,7 @@ export function PlanningScreen({ settings }: { settings: Settings }) {
           {weekOffset !== 0 && <button className="text-link" onClick={() => { setWeekOffset(0); setPicked(null) }}>· Cette semaine</button>}
         </>}
         action={<>
+          <SquareButton label="Liste de courses" onClick={() => nav.push({ type: 'shopping' })}><CartIcon /></SquareButton>
           <SquareButton label="Semaine précédente" onClick={() => { setWeekOffset((w) => w - 1); setPicked(null) }}><BackIcon /></SquareButton>
           <SquareButton label="Semaine suivante" onClick={() => { setWeekOffset((w) => w + 1); setPicked(null) }}><ChevronIcon size={20} /></SquareButton>
         </>}

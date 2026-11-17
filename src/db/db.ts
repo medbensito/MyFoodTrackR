@@ -1,5 +1,5 @@
 import Dexie, { type EntityTable } from 'dexie'
-import type { Food, LogEntry, PlannedMeal, Recipe, Settings } from '../types'
+import type { DayOverride, Food, LogEntry, PlannedMeal, Recipe, Settings, ShoppingCheck } from '../types'
 import { DEFAULT_SETTINGS } from '../lib/targets'
 import { initialFoods } from './seed'
 import { SAMPLE_RECIPES } from './sampleRecipes'
@@ -10,6 +10,8 @@ export class FoodTrackDB extends Dexie {
   plannedMeals!: EntityTable<PlannedMeal, 'id'>
   logEntries!: EntityTable<LogEntry, 'id'>
   settings!: EntityTable<Settings, 'id'>
+  shoppingChecks!: EntityTable<ShoppingCheck, 'id'>
+  dayOverrides!: EntityTable<DayOverride, 'date'>
 
   constructor(name = 'myfoodtrackr') {
     super(name)
@@ -34,6 +36,12 @@ export class FoodTrackDB extends Dexie {
           if (!s.goal) s.goal = DEFAULT_SETTINGS.goal
         })
       })
+
+    // v3 (v2 de l'app) : cases de la liste de courses, exceptions de séance.
+    this.version(3).stores({
+      shoppingChecks: 'id',
+      dayOverrides: 'date',
+    })
 
     // Exécuté une seule fois, à la création de la base sur l'appareil.
     this.on('populate', async (tx) => {

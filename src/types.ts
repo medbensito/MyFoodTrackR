@@ -14,6 +14,7 @@ export type Food = {
   source: string
   verified: boolean
   custom: boolean
+  favorite?: boolean
 }
 
 export type MealSlot = 'breakfast' | 'lunch' | 'dinner' | 'snack'
@@ -25,6 +26,7 @@ export type Recipe = {
   slots: MealSlot[]
   ingredients: { foodId: string; grams: number }[]
   notes?: string
+  favorite?: boolean
 }
 
 export type PlannedMeal = {
@@ -72,3 +74,9 @@ export type Settings = {
   /** Date du dernier export de sauvegarde (ms). */
   lastExportAt?: number
 }
+
+/** Case cochée de la liste de courses : id = `${période}|${foodId}`. */
+export type ShoppingCheck = { id: string; checked: boolean }
+
+/** Exception ponctuelle au rythme d'entraînement (séance sautée ou ajoutée). */
+export type DayOverride = { date: string; training: boolean }
