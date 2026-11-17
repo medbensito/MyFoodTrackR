@@ -83,3 +83,30 @@ describe('base locale', () => {
     }
   })
 })
+
+describe('fiches de préparation (v8)', () => {
+  it('ajoute la fiche aux recettes fournies, sans écraser une recette modifiée', async () => {
+    const { GUIDES } = await import('./guides')
+    const name = 'mft-v7-' + Math.random()
+    const v7 = new Dexie(name)
+    v7.version(7).stores({ foods: 'id, name, category, verified, barcode', recipes: 'id, name, *slots', plannedMeals: 'id, date, [date+slot]', logEntries: 'id, date', settings: 'id', shoppingChecks: 'id', dayOverrides: 'date', weighIns: 'date' })
+    const tajine = PACK_RECIPES.find((r) => r.id === 'pk-tajine-poulet-olives')!
+    const porridge = SAMPLE_RECIPES.find((r) => r.id === 'ex-porridge-proteine')!
+    await v7.table('recipes').bulkAdd([
+      tajine,
+      { ...porridge, notes: 'Ma façon à moi' },
+      { ...SAMPLE_RECIPES.find((r) => r.id === 'ex-poulet-riz-brocoli')!, ingredients: [{ foodId: 'poulet-blanc-cuit', grams: 110 }] },
+    ])
+    v7.close()
+    const db = new FoodTrackDB(name)
+    await db.open()
+    const t = await db.recipes.get('pk-tajine-poulet-olives')
+    expect(t?.steps).toEqual(GUIDES['pk-tajine-poulet-olives'].steps)
+    expect(t?.notes).toBeUndefined()
+    const p = await db.recipes.get('ex-porridge-proteine')
+    expect(p?.steps?.length).toBeGreaterThan(0)
+    expect(p?.notes).toBe('Ma façon à moi')
+    expect((await db.recipes.get('ex-poulet-riz-brocoli'))?.steps).toBeUndefined()
+    db.close()
+  })
+})

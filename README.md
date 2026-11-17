@@ -4,7 +4,14 @@ Design : direction A « Nuit athlétique » (fond noir, citron #C8F560, Barlow C
 
 PWA personnelle de nutrition : planning de la semaine, recettes avec macros, tracker de protéines. Tout est stocké localement sur l'appareil (IndexedDB).
 
-## État : v3.0.0
+## État : v3.1.0
+
+- Fiches recettes guidées : temps de préparation et de cuisson, matériel, étapes détaillées (feu, durées, repères de cuisson), astuces, pour les 27 recettes fournies
+- Quantités dans les étapes qui suivent la portion, poids cru à acheter pour les ingrédients comptés cuits, eau de cuisson, œufs à la pièce
+- Étapes à cocher pendant la préparation ; temps total dans la liste des recettes
+- Éditeur : temps, matériel, étapes et astuces (une par ligne) ; [Nom d'un ingrédient] affiche sa quantité
+
+### v3.0.0
 
 - Recettes rééquilibrées : une semaine générée tombe vers 145–180 g de protéines (cible 140 g), calories à ±85 kcal
 - Cibles adaptatives (Profil › Poids) : pesée hebdo, tendance sur 4 semaines, dépense réelle estimée depuis le journal, ajustement proposé (±200 kcal max, 1 fois tous les 14 jours)

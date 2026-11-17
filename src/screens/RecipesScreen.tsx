@@ -5,6 +5,7 @@ import { useFoodsMap } from '../db/hooks'
 import { useNav } from '../nav'
 import type { MealSlot } from '../types'
 import { normalize, recipeTotals, roundMacros, SLOT_LABEL, SLOT_ORDER } from '../lib/nutrition'
+import { fmtMinutes, totalMinutes } from '../lib/steps'
 import { ScreenHeader, SquareButton } from '../components/ScreenHeader'
 import { ChevronIcon, PlusIcon } from '../components/icons'
 
@@ -69,7 +70,7 @@ export function RecipesScreen() {
             <button key={r.id} className="list-row" onClick={() => nav.push({ type: 'recipe', id: r.id })}>
               <span className="list-main">
                 <strong>{r.name}</strong>
-                <span className="caps">{r.favorite && <span className="lime">★ </span>}{SLOT_ORDER.filter((s) => r.slots.includes(s)).map((s) => SLOT_LABEL[s]).join(' / ')}</span>
+                <span className="caps">{r.favorite && <span className="lime">★ </span>}{SLOT_ORDER.filter((s) => r.slots.includes(s)).map((s) => SLOT_LABEL[s]).join(' / ')}{totalMinutes(r) > 0 && ` · ${fmtMinutes(totalMinutes(r))}`}</span>
               </span>
               <span className="list-num"><span className="k">{m.kcal}</span><br /><span className="p">{m.protein} g P</span></span>
               <span className="chev"><ChevronIcon /></span>

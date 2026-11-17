@@ -7,6 +7,8 @@ import { macrosForGrams, newId, recipeTotals, roundMacros, SLOT_LABEL, SLOT_ORDE
 import { ScreenHeader } from '../components/ScreenHeader'
 import { FoodPicker } from '../components/FoodPicker'
 import { PlusIcon } from '../components/icons'
+import { stepFromEditable, stepToEditable } from '../lib/steps'
+import type { Food } from '../types'
 
 const EMPTY: Recipe = { id: '', name: '', servings: 1, slots: [], ingredients: [], notes: '' }
 
@@ -17,13 +19,18 @@ export function RecipeEditScreen({ id }: { id: string | null }) {
   const [draft, setDraft] = useState<Recipe | null>(id ? null : { ...EMPTY })
   const [picking, setPicking] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
+  /** Étapes, astuces et matériel édités en texte libre, une entrée par ligne. */
+  const [text, setText] = useState<{ steps: string; tips: string; tools: string } | null>(id ? null : { steps: '', tips: '', tools: '' })
 
   useEffect(() => {
-    if (!id) return
-    db.recipes.get(id).then((r) => setDraft(r ? structuredClone(r) : { ...EMPTY }))
-  }, [id])
+    if (!id || !foods || text) return
+    db.recipes.get(id).then((r) => {
+      setDraft(r ? structuredClone(r) : { ...EMPTY })
+      setText(toText(r, foods))
+    })
+  }, [id, foods, text])
 
-  if (!draft || !foods || !foodsList) return <div className="loading">Chargement…</div>
+  if (!draft || !foods || !foodsList || !text) return <div className="loading">Chargement…</div>
 
   const update = (patch: Partial<Recipe>) => setDraft({ ...draft, ...patch })
   const setGrams = (i: number, grams: number) =>
@@ -51,7 +58,12 @@ export function RecipeEditScreen({ id }: { id: string | null }) {
       id: draft.id || newId('rec'),
       name: draft.name.trim(),
       servings: Math.round(draft.servings),
-      notes: draft.notes?.trim() || undefined,
+      notes: undefined,
+      prepMin: draft.prepMin && draft.prepMin > 0 ? Math.round(draft.prepMin) : undefined,
+      cookMin: draft.cookMin && draft.cookMin > 0 ? Math.round(draft.cookMin) : undefined,
+      tools: lines(text.tools.replace(/,/g, '\n')),
+      steps: lines(text.steps).map((l) => stepFromEditable(l, draft.ingredients, foods)),
+      tips: lines(text.tips).map((l) => stepFromEditable(l, draft.ingredients, foods)),
     }
     await db.recipes.put(recipe)
     if (id) nav.pop()
@@ -138,8 +150,28 @@ export function RecipeEditScreen({ id }: { id: string | null }) {
         <button className="add-row" onClick={() => setPicking(true)}><PlusIcon /> Ajouter un ingrédient</button>
 
         <div className="section-label"><span>Préparation</span><span className="small muted">facultatif</span></div>
-        <textarea className="textarea" rows={3} placeholder="Étapes, astuces…" value={draft.notes ?? ''}
-          onChange={(e) => update({ notes: e.target.value })} />
+        <div className="card">
+          <MinField label="Préparation" value={draft.prepMin} onChange={(v) => update({ prepMin: v })} />
+          <MinField label="Cuisson" value={draft.cookMin} onChange={(v) => update({ cookMin: v })} />
+          <label className="stack-field">
+            <span>Matériel</span>
+            <input className="input input--full" placeholder="Ex. poêle, casserole avec couvercle" value={text.tools}
+              onChange={(e) => setText({ ...text, tools: e.target.value })} />
+          </label>
+        </div>
+        <label className="stack-field">
+          <span>Étapes · une par ligne</span>
+          <textarea className="textarea" rows={8} placeholder={'Rince le riz…\nFais revenir l\'oignon…'} value={text.steps}
+            onChange={(e) => setText({ ...text, steps: e.target.value })} />
+        </label>
+        <p className="small muted" style={{ marginTop: 6 }}>
+          Écris le nom d'un ingrédient entre crochets, par exemple [{foods.get(draft.ingredients[0]?.foodId)?.name ?? 'Riz blanc cru'}] : la fiche affichera sa quantité selon la portion.
+        </p>
+        <label className="stack-field">
+          <span>Astuces · une par ligne</span>
+          <textarea className="textarea" rows={3} placeholder="Variante, conservation…" value={text.tips}
+            onChange={(e) => setText({ ...text, tips: e.target.value })} />
+        </label>
 
         {!valid && <p className="footnote">Pour enregistrer, il manque {problems.join(', ')}.</p>}
         <button className="btn btn--lime btn--block" style={{ marginTop: 16 }} disabled={!valid} onClick={save}>Enregistrer</button>
@@ -172,5 +204,31 @@ export function RecipeEditScreen({ id }: { id: string | null }) {
         />
       )}
     </>
+  )
+}
+
+const lines = (t: string) => t.split('\n').map((l) => l.trim()).filter(Boolean)
+
+function toText(r: Recipe | undefined, foods: Map<string, Food>) {
+  // Ancienne note libre (avant les étapes) : reprise comme étapes.
+  const steps = r?.steps ?? (r?.notes ? lines(r.notes) : [])
+  const tips = [...(r?.tips ?? []), ...(r?.steps && r.notes ? [r.notes] : [])]
+  return {
+    steps: steps.map((st) => stepToEditable(st, foods)).join('\n'),
+    tips: tips.map((t) => stepToEditable(t, foods)).join('\n'),
+    tools: (r?.tools ?? []).join(', '),
+  }
+}
+
+function MinField({ label, value, onChange }: { label: string; value?: number; onChange: (v: number | undefined) => void }) {
+  return (
+    <label className="field">
+      <span>{label}</span>
+      <span className="field-input">
+        <input className="input input--num" type="number" inputMode="numeric" aria-label={`${label} en minutes`}
+          value={value ?? ''} onChange={(e) => onChange(e.target.value === '' ? undefined : Number(e.target.value))} />
+        <span className="unit">min</span>
+      </span>
+    </label>
   )
 }

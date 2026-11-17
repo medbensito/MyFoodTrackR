@@ -7,7 +7,8 @@ import { macroShares } from '../lib/labels'
 import { fmtFactor, macrosForGrams, recipeTotals, roundMacros, scaleMacros, SLOT_LABEL, SLOT_ORDER } from '../lib/nutrition'
 import { ScreenHeader } from '../components/ScreenHeader'
 import { AddToPlanSheet } from '../components/AddToPlanSheet'
-import { StarIcon } from '../components/icons'
+import { CheckIcon, StarIcon } from '../components/icons'
+import { fmtMinutes, piecesLabel, stepParts, totalMinutes } from '../lib/steps'
 
 export function RecipeDetailScreen({ id }: { id: string }) {
   const nav = useNav()
@@ -17,6 +18,8 @@ export function RecipeDetailScreen({ id }: { id: string }) {
   const [factor, setFactor] = useState(1)
   const [planning, setPlanning] = useState(false)
   const [done, setDone] = useState<string | null>(null)
+  /** Étapes cochées pendant la préparation (non enregistré). */
+  const [checked, setChecked] = useState<Set<number>>(new Set())
 
   if (recipe === undefined || !foods) return <div className="loading">Chargement…</div>
   if (recipe === null) return null
@@ -46,6 +49,13 @@ export function RecipeDetailScreen({ id }: { id: string }) {
       <section className="screen" style={{ paddingBottom: 'calc(var(--safe-bottom) + 120px)' }}>
         <span className="caps caps--lime" style={{ fontSize: 12, letterSpacing: '0.14em' }}>Recette · {slotsLabel}</span>
         <h1 className="recipe-title">{recipe.name}</h1>
+        {totalMinutes(recipe) > 0 && (
+          <div className="recipe-time">
+            <div><span className="d">{fmtMinutes(totalMinutes(recipe))}</span><span className="caps">Total</span></div>
+            {!!recipe.prepMin && <div><span className="d">{fmtMinutes(recipe.prepMin)}</span><span className="caps">Préparation</span></div>}
+            {!!recipe.cookMin && <div><span className="d">{fmtMinutes(recipe.cookMin)}</span><span className="caps">Cuisson</span></div>}
+          </div>
+        )}
 
         <div className="macro4">
           <div><span className="d">{m.kcal}</span><span className="caps">kcal</span></div>
@@ -98,7 +108,7 @@ export function RecipeDetailScreen({ id }: { id: string }) {
                 <span className="ing-g">{grams}<small> g</small></span>
                 <span className="ing-name">
                   <strong>{food.name}</strong>
-                  <span className="sub">{food.state}{!food.verified && <span className="tag tag--amber">à vérifier</span>}</span>
+                  <span className="sub">{piecesLabel(ing.foodId, grams) ?? food.state}{!food.verified && <span className="tag tag--amber">à vérifier</span>}</span>
                 </span>
                 <span className="ing-num">{im.kcal}<br /><span className="lime">{im.protein} g P</span></span>
               </div>
@@ -106,10 +116,48 @@ export function RecipeDetailScreen({ id }: { id: string }) {
           })}
         </div>
 
-        {recipe.notes && (
+        {recipe.steps && recipe.steps.length > 0 && (
           <>
-            <div className="section-label"><span>Préparation</span></div>
-            <p className="notes">{recipe.notes}</p>
+            <div className="section-label">
+              <span>Préparation</span>
+              <span className="small muted">{checked.size ? `${checked.size}/${recipe.steps.length} faites` : `${recipe.steps.length} étapes`}</span>
+            </div>
+            {recipe.tools && recipe.tools.length > 0 && (
+              <p className="recipe-tools"><span className="caps">Matériel</span> {recipe.tools.join(' · ')}</p>
+            )}
+            <ol className="steps">
+              {recipe.steps.map((st, i) => {
+                const on = checked.has(i)
+                return (
+                  <li key={i}>
+                    <button className={`step ${on ? 'step--done' : ''}`} aria-pressed={on}
+                      onClick={() => setChecked((c) => { const n = new Set(c); if (n.has(i)) n.delete(i); else n.add(i); return n })}>
+                      <span className="step-n" aria-hidden>{on ? <CheckIcon size={18} /> : i + 1}</span>
+                      <span className="step-t">
+                        {stepParts(st, recipe, factor).map((p, k) => ('qty' in p ? <strong key={k}>{p.qty}</strong> : <span key={k}>{p.text}</span>))}
+                      </span>
+                    </button>
+                  </li>
+                )
+              })}
+            </ol>
+            <p className="footnote">
+              Touche une étape pour la cocher.
+              {factor !== 1 && ` Quantités pour ${fmtFactor(factor)} ; épices et assaisonnement donnés pour une portion, ajuste au goût.`}
+            </p>
+          </>
+        )}
+        {((recipe.tips && recipe.tips.length > 0) || recipe.notes) && (
+          <>
+            <div className="section-label"><span>{recipe.steps?.length ? 'Astuces' : 'Préparation'}</span></div>
+            {recipe.tips && recipe.tips.length > 0 && (
+              <ul className="tips">
+                {recipe.tips.map((t, i) => (
+                  <li key={i}>{stepParts(t, recipe, factor).map((p, k) => ('qty' in p ? <strong key={k}>{p.qty}</strong> : <span key={k}>{p.text}</span>))}</li>
+                ))}
+              </ul>
+            )}
+            {recipe.notes && <p className="notes">{recipe.notes}</p>}
           </>
         )}
         {recipe.servings > 1 && <p className="footnote">La recette entière fait {recipe.servings} portions.</p>}

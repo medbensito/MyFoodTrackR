@@ -436,3 +436,25 @@ input, select, textarea { font: inherit; }
 .link { background: none; border: 0; padding: 0; color: var(--lime); font: inherit; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
 .field--missing .input { border-color: var(--amber); }
 .tnum { font-variant-numeric: tabular-nums; }
+
+/* ——— fiche recette guidée ——— */
+.recipe-time { display: flex; gap: 22px; margin-top: 14px; }
+.recipe-time > div { display: flex; flex-direction: column; gap: 2px; }
+.recipe-time .d { font-family: var(--display); font-weight: 700; font-size: 22px; line-height: 1; }
+.recipe-time > div:first-child .d { color: var(--lime); }
+.recipe-tools { margin: 0 0 6px; font-size: 14px; color: var(--text-2); line-height: 1.5; }
+.recipe-tools .caps { margin-right: 6px; }
+.steps { list-style: none; margin: 0; padding: 0; }
+.steps li { border-bottom: 1px solid var(--line-soft); }
+.steps li:last-child { border-bottom: 0; }
+.step { display: flex; gap: 14px; width: 100%; text-align: left; background: none; border: 0; color: inherit; padding: 16px 0; font: inherit; }
+.step-n { flex-shrink: 0; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; border: 1.5px solid var(--lime); color: var(--lime); font-family: var(--display); font-weight: 800; font-size: 19px; margin-top: -3px; }
+.step-t { font-size: 16px; line-height: 1.6; color: var(--text); }
+.step-t strong { font-weight: 700; color: var(--text); background: rgba(200, 245, 96, 0.12); border-radius: 4px; padding: 0 1px; white-space: nowrap; }
+.step--done .step-n { background: var(--lime); color: var(--bg); }
+.step--done .step-t { color: var(--muted); }
+.step--done .step-t strong { color: var(--muted); background: none; }
+.tips { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.tips li { position: relative; padding-left: 18px; font-size: 15px; line-height: 1.55; color: var(--text-2); }
+.tips li::before { content: ''; position: absolute; left: 2px; top: 0.62em; width: 6px; height: 6px; border-radius: 50%; background: var(--lime); }
+.tips li strong { color: var(--text); font-weight: 700; }

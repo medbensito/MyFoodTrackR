@@ -29,6 +29,18 @@ export type Recipe = {
   ingredients: { foodId: string; grams: number }[]
   notes?: string
   favorite?: boolean
+  /** Minutes de préparation (épluchage, découpe, marinade active). */
+  prepMin?: number
+  /** Minutes de cuisson (dont mijotage). */
+  cookMin?: number
+  /** Matériel utile : poêle, cocotte… */
+  tools?: string[]
+  /**
+   * Étapes pour 1 portion. `{foodId}` affiche la quantité de l'ingrédient selon la portion ;
+   * `{foodId*1.35}` une quantité dérivée (poids cru, eau…) ; `{foodId*1.9 ml}` dans une autre unité.
+   */
+  steps?: string[]
+  tips?: string[]
 }
 
 export type PlannedMeal = {
