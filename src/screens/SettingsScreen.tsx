@@ -3,6 +3,9 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db/db'
 import { buildMacros } from '../lib/targets'
 import type { Macros, Settings, TrainingTime } from '../types'
+import { GOAL_LABEL } from '../lib/labels'
+import { RoundButton, ScreenHeader } from '../components/ScreenHeader'
+import { BackIcon } from '../components/icons'
 
 // Affichage lundi → dimanche, valeurs JS getDay()
 const DAYS: { value: number; label: string }[] = [
@@ -63,7 +66,9 @@ function isValid(s: Settings): boolean {
   return nums.every((n) => Number.isFinite(n) && n > 0)
 }
 
-export function SettingsScreen({ settings }: { settings: Settings }) {
+const GOALS = (Object.keys(GOAL_LABEL) as Settings['goal'][]).map((g) => ({ value: g, label: GOAL_LABEL[g].short }))
+
+export function SettingsScreen({ settings, onBack }: { settings: Settings; onBack: () => void }) {
   const [draft, setDraft] = useState<Settings>(settings)
   const [saved, setSaved] = useState(false)
   const foodStats = useLiveQuery(async () => {
@@ -87,12 +92,31 @@ export function SettingsScreen({ settings }: { settings: Settings }) {
   }
 
   return (
+    <>
+    <ScreenHeader
+      title="Réglages"
+      subtitle="Profil, entraînement et cibles"
+      action={<RoundButton label="Retour" onClick={onBack}><BackIcon size={22} /></RoundButton>}
+    />
     <section className="screen">
       <div className="card">
         <h2>Profil</h2>
+        <label className="field">
+          <span>Nom</span>
+          <input className="text-input" value={draft.name ?? ''} onChange={(e) => update({ name: e.target.value })} />
+        </label>
         <NumberField label="Poids" unit="kg" value={draft.weightKg} step={0.5} onChange={(v) => update({ weightKg: v })} />
         <NumberField label="Taille" unit="cm" value={draft.heightCm} onChange={(v) => update({ heightCm: v })} />
         <NumberField label="Âge" unit="ans" value={draft.age} onChange={(v) => update({ age: v })} />
+        <div className="segmented" role="radiogroup" aria-label="Objectif">
+          {GOALS.map((g) => (
+            <button key={g.value} role="radio" aria-checked={draft.goal === g.value}
+              className={draft.goal === g.value ? 'seg--on' : ''} onClick={() => update({ goal: g.value })}>
+              {g.label}
+            </button>
+          ))}
+        </div>
+        <p className="muted small">Changer d'objectif ne modifie pas les cibles : ajuste-les plus bas.</p>
       </div>
 
       <div className="card">
@@ -149,5 +173,6 @@ export function SettingsScreen({ settings }: { settings: Settings }) {
         <button className="primary" disabled={!dirty || !valid} onClick={save}>Enregistrer</button>
       </div>
     </section>
+    </>
   )
 }

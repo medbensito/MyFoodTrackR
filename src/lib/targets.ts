@@ -20,6 +20,8 @@ export function targetsForDate(date: Date, settings: Settings): Macros {
 
 export const DEFAULT_SETTINGS: Settings = {
   id: 'main',
+  name: 'Mehdi Bensimmou',
+  goal: 'recomposition',
   weightKg: 70,
   heightCm: 175,
   age: 28,

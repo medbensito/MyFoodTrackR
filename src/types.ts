@@ -54,6 +54,8 @@ export type TrainingTime = 'morning' | 'noon' | 'evening'
 
 export type Settings = {
   id: 'main'
+  name: string
+  goal: 'recomposition' | 'perte' | 'prise'
   weightKg: number
   heightCm: number
   age: number
