@@ -385,3 +385,19 @@ input, select, textarea { font: inherit; }
 .review-banner .lime { flex-shrink: 0; }
 .review-banner span:nth-child(2) { flex: 1; display: flex; flex-direction: column; gap: 2px; }
 .review-banner strong { font-family: var(--display); font-weight: 800; font-size: 20px; text-transform: uppercase; }
+
+/* ——— v3 : poids et cibles adaptatives ——— */
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.weight-top { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; }
+.weight-top > div { display: flex; flex-direction: column; gap: 4px; }
+.adapt--on { border-color: var(--lime); }
+.adapt-rate { display: flex; flex-direction: column; gap: 2px; }
+.adapt-rate .d { font-weight: 800; font-size: 30px; line-height: 1; }
+.adapt-grid { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; align-items: baseline; margin: 14px 0 8px; font-family: var(--display); font-size: 20px; font-weight: 600; }
+.adapt-grid strong { font-weight: 800; }
+.weigh-input { display: flex; align-items: center; justify-content: center; gap: 12px; margin: 6px 0 4px; }
+.weigh-input > button { width: 56px; height: 56px; border-radius: 16px; border: 1px solid var(--line); background: var(--surface); color: var(--text); font-size: 26px; }
+.weigh-input label { display: flex; align-items: baseline; gap: 6px; }
+.weigh-input input { width: 150px; height: 72px; text-align: center; border: 1px solid var(--line); border-radius: 16px; background: var(--surface-2); color: var(--text); font-family: var(--display); font-weight: 800; font-size: 48px; }
+.weigh-input input:focus { outline: 2px solid var(--lime); }
+.weigh-input label > span:last-child { font-family: var(--display); font-weight: 600; font-size: 22px; color: var(--muted); }

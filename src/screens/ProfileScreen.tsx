@@ -7,6 +7,7 @@ import { lastExportLabel } from '../components/BackupCard'
 import { daysSince } from '../lib/backup'
 import { GOAL_LABEL, TIME_LABEL, trainingDaysLabel } from '../lib/labels'
 import { ScreenHeader, SquareButton } from '../components/ScreenHeader'
+import { WeightCard } from '../components/WeightCard'
 import {
   CalendarIcon, ChevronIcon, ClockIcon, DatabaseIcon, GearIcon, PencilIcon, SaveIcon, TargetIcon, TargetsIcon,
 } from '../components/icons'
@@ -69,6 +70,8 @@ export function ProfileScreen({ settings }: { settings: Settings }) {
           <span className="lime"><ChevronIcon /></span>
         </button>
 
+        <WeightCard settings={settings} />
+
         <div className="section-label"><span>Préférences</span></div>
         <div className="prefs">
           <ul>
@@ -92,7 +95,6 @@ export function ProfileScreen({ settings }: { settings: Settings }) {
             />
           </ul>
         </div>
-        <p className="footnote">Le suivi du poids reste dans ton app de transformation physique.</p>
         <p className="footnote">MyFoodTrackR {__APP_VERSION__}</p>
       </section>
     </>

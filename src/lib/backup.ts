@@ -1,4 +1,4 @@
-import type { DayOverride, Food, LogEntry, PlannedMeal, Recipe, Settings, ShoppingCheck } from '../types'
+import type { DayOverride, Food, LogEntry, PlannedMeal, Recipe, Settings, ShoppingCheck, WeighIn } from '../types'
 
 export const BACKUP_APP = 'MyFoodTrackR'
 export const BACKUP_VERSION = 1
@@ -12,6 +12,8 @@ export type BackupData = {
   /** Ajoutés en v2 de l'app : absents des sauvegardes plus anciennes. */
   dayOverrides?: DayOverride[]
   shoppingChecks?: ShoppingCheck[]
+  /** Ajouté en v3 de l'app. */
+  weighIns?: WeighIn[]
 }
 
 export type Backup = { app: string; version: number; exportedAt: string; data: BackupData }
@@ -72,7 +74,7 @@ export function parseBackup(text: string): ParseResult {
   if (!data.logEntries.every((e) => isObj(e.macros) && num(e.macros.kcal))) {
     return { ok: false, error: 'Sauvegarde abîmée : une entrée du journal est invalide.' }
   }
-  for (const k of ['dayOverrides', 'shoppingChecks'] as const) {
+  for (const k of ['dayOverrides', 'shoppingChecks', 'weighIns'] as const) {
     if (d[k] !== undefined && !Array.isArray(d[k])) return { ok: false, error: `Sauvegarde abîmée : « ${k} » invalide.` }
   }
   if (!data.settings.some((s) => s.id === 'main')) return { ok: false, error: 'Sauvegarde incomplète : réglages manquants.' }

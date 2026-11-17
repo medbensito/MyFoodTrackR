@@ -73,6 +73,8 @@ export type Settings = {
   maxRepeatsPerWeekPerSlot: number
   /** Date du dernier export de sauvegarde (ms). */
   lastExportAt?: number
+  /** Date du dernier ajustement des cibles accepté (ms). */
+  lastAdjustAt?: number
 }
 
 /** Case cochée de la liste de courses : id = `${période}|${foodId}`. */
@@ -80,3 +82,6 @@ export type ShoppingCheck = { id: string; checked: boolean }
 
 /** Exception ponctuelle au rythme d'entraînement (séance sautée ou ajoutée). */
 export type DayOverride = { date: string; training: boolean }
+
+/** Pesée : une par jour au plus. */
+export type WeighIn = { date: string; kg: number }
