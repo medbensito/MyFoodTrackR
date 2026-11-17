@@ -4,6 +4,7 @@ import { FoodTrackDB } from './db'
 import { initialFoods } from './seed'
 import { SAMPLE_RECIPES } from './sampleRecipes'
 import { PACK_FOODS, PACK_RECIPES } from './pack'
+import { LEGACY_V4 } from './legacyRecipes'
 import { DEFAULT_SETTINGS } from '../lib/targets'
 import Dexie from 'dexie'
 
@@ -51,6 +52,25 @@ describe('base locale', () => {
     expect((await db.recipes.get(PACK_RECIPES[0].id))?.name).toBe('Ma version')
     expect(await db.recipes.count()).toBe(PACK_RECIPES.length)
     expect(await db.foods.count()).toBe(PACK_FOODS.length)
+    db.close()
+  })
+
+  it('rééquilibre les recettes non modifiées, garde les autres', async () => {
+    const name = 'test-v5-' + Math.random()
+    const v4 = new Dexie(name)
+    v4.version(4).stores({ foods: 'id, name, category, verified', recipes: 'id, name, *slots', plannedMeals: 'id, date, [date+slot]', logEntries: 'id, date', settings: 'id', shoppingChecks: 'id', dayOverrides: 'date' })
+    const old = LEGACY_V4['ex-poulet-riz-brocoli']
+    await v4.table('recipes').add({ id: 'ex-poulet-riz-brocoli', ...old, notes: undefined, favorite: true })
+    await v4.table('recipes').add({ id: 'ex-pates-thon', ...LEGACY_V4['ex-pates-thon'], name: 'Mes pâtes au thon' })
+    await v4.table('settings').add(DEFAULT_SETTINGS)
+    v4.close()
+    const db = new FoodTrackDB(name)
+    const updated = await db.recipes.get('ex-poulet-riz-brocoli')
+    const target = SAMPLE_RECIPES.find((r) => r.id === 'ex-poulet-riz-brocoli')!
+    expect(updated?.ingredients).toEqual(target.ingredients)
+    expect(updated?.favorite).toBe(true)
+    expect((await db.recipes.get('ex-pates-thon'))?.name).toBe('Mes pâtes au thon')
+    expect((await db.recipes.get('ex-pates-thon'))?.ingredients).toEqual(LEGACY_V4['ex-pates-thon'].ingredients)
     db.close()
   })
 

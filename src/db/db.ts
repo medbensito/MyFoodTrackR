@@ -4,6 +4,7 @@ import { DEFAULT_SETTINGS } from '../lib/targets'
 import { initialFoods } from './seed'
 import { SAMPLE_RECIPES } from './sampleRecipes'
 import { PACK_FOODS, PACK_RECIPES } from './pack'
+import { LEGACY_V4 } from './legacyRecipes'
 
 export class FoodTrackDB extends Dexie {
   foods!: EntityTable<Food, 'id'>
@@ -53,6 +54,23 @@ export class FoodTrackDB extends Dexie {
         const haveR = new Set(await recipes.toCollection().primaryKeys())
         await foods.bulkAdd(PACK_FOODS.filter((x) => !haveF.has(x.id)))
         await recipes.bulkAdd(PACK_RECIPES.filter((x) => !haveR.has(x.id)))
+      })
+
+    // v5 : recettes rééquilibrées (moins de protéines, plus de féculents).
+    // Une recette n'est remplacée que si l'utilisateur ne l'a pas modifiée.
+    this.version(5)
+      .stores({})
+      .upgrade(async (tx) => {
+        const table = tx.table('recipes')
+        const current = new Map([...SAMPLE_RECIPES, ...PACK_RECIPES].map((x) => [x.id, x]))
+        for (const [id, old] of Object.entries(LEGACY_V4)) {
+          const stored = await table.get(id) as Recipe | undefined
+          const next = current.get(id)
+          if (!stored || !next) continue
+          const same = JSON.stringify([stored.name, stored.servings, stored.slots, stored.ingredients])
+            === JSON.stringify([old.name, old.servings, old.slots, old.ingredients])
+          if (same) await table.put({ ...next, favorite: stored.favorite })
+        }
       })
 
     // Exécuté une seule fois, à la création de la base sur l'appareil.

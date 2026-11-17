@@ -29,9 +29,9 @@ describe('buildShoppingList', () => {
     ], recipes, foods)
     const all = groups.flatMap((g) => g.items)
     const poulet = all.find((i) => i.food.id === 'poulet-blanc-cuit')!
-    expect(poulet.grams).toBe(530) // 525 g arrondi au-dessus
+    expect(poulet.grams).toBe(390) // 110 × 2,5 + 110 = 385 g, arrondi au-dessus
     expect(poulet.uses).toBe(3)
-    expect(all.find((i) => i.food.id === 'riz-blanc-cru')!.grams).toBe(230) // 225 arrondi
+    expect(all.find((i) => i.food.id === 'riz-blanc-cru')!.grams).toBe(250)
     expect(itemCount).toBe(all.length)
   })
 

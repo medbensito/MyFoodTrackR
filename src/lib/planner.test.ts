@@ -154,6 +154,17 @@ describe('avec le pack de recettes', () => {
       expect(ok.length, `graine ${seed}`).toBeGreaterThanOrEqual(5)
     }
   })
+  it('reste proche de la cible de protéines sans la dépasser de beaucoup', () => {
+    const ps: number[] = []
+    for (const seed of [1, 7, 42, 99, 2026]) {
+      const r = generateWeek(input({ recipes: all }), seed)
+      for (const d of dates) ps.push(dayTotal(r.meals.filter((m) => m.date === d), allById).protein)
+    }
+    const avg = ps.reduce((a, b) => a + b, 0) / ps.length
+    expect(Math.min(...ps)).toBeGreaterThanOrEqual(135)
+    expect(avg).toBeLessThan(170)
+  })
+
   it('varie davantage les petits-déjeuners', () => {
     const r = generateWeek(input({ recipes: all }), 42)
     const breakfasts = new Set(r.meals.filter((m) => m.slot === 'breakfast').map((m) => m.recipeId))
