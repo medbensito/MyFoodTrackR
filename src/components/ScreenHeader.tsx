@@ -23,13 +23,13 @@ export function ScreenHeader({ title, subtitle, dot, action, back, backAction, c
         </div>
       )}
       {title && (
-        <div className="head-row">
-          <div className="head-titles">
+        <>
+          <div className="head-row">
             <h1>{title}</h1>
-            {subtitle && <span className="head-sub">{dot && <span className="dot" aria-hidden />}{subtitle}</span>}
+            {action && <div className="head-actions">{action}</div>}
           </div>
-          {action && <div className="head-actions">{action}</div>}
-        </div>
+          {subtitle && <span className="head-sub">{dot && <span className="dot" aria-hidden />}{subtitle}</span>}
+        </>
       )}
       {children && <div className="head-body">{children}</div>}
     </header>

@@ -12,7 +12,8 @@ import { dayTotal } from '../lib/planner'
 import { entryFromPlanned, totalOf } from '../lib/journal'
 import { ScreenHeader, SquareButton } from '../components/ScreenHeader'
 import { AddEntrySheet } from '../components/AddEntrySheet'
-import { BackIcon, CheckIcon, ChevronIcon, PlusIcon } from '../components/icons'
+import { BackIcon, CheckIcon, ChevronIcon, PlusIcon, TrophyIcon } from '../components/icons'
+import { useNav } from '../nav'
 
 const SUB_FMT = new Intl.DateTimeFormat('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })
 const TITLE_FMT = new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric' })
@@ -58,6 +59,7 @@ function CompareCol({ label, m }: { label: string; m: Macros }) {
 }
 
 export function TrackerScreen({ settings }: { settings: Settings }) {
+  const nav = useNav()
   const [offset, setOffset] = useState(0)
   const [adding, setAdding] = useState(false)
   const [dayType, setDayType] = useState(false)
@@ -116,6 +118,7 @@ export function TrackerScreen({ settings }: { settings: Settings }) {
         </>}
         dot={training}
         action={<>
+          <SquareButton label="Bilan de la semaine" onClick={() => nav.push({ type: 'review' })}><TrophyIcon /></SquareButton>
           <SquareButton label="Jour précédent" onClick={() => setOffset((o) => o - 1)}><BackIcon /></SquareButton>
           <SquareButton label="Jour suivant" onClick={() => setOffset((o) => o + 1)}><ChevronIcon size={20} /></SquareButton>
         </>}
@@ -132,6 +135,13 @@ export function TrackerScreen({ settings }: { settings: Settings }) {
       </ScreenHeader>
 
       <section className="screen">
+        {offset === 0 && (day.getDay() === 0 || day.getDay() === 1) && (
+          <button className="review-banner" onClick={() => nav.push({ type: 'review' })}>
+            <span className="lime"><TrophyIcon size={24} /></span>
+            <span><strong>Ton bilan de la semaine</strong><span className="small muted">Jours réussis, série, protéines moyennes</span></span>
+            <span className="lime"><ChevronIcon /></span>
+          </button>
+        )}
         <div className="stat-grid" style={{ marginTop: 26 }}>
           <Stat label="Kcal" value={consumed.kcal} target={t.kcal} color="var(--text)" />
           <Stat label="Glucides" value={consumed.carbs} target={t.carbs} color="var(--cyan)" />
