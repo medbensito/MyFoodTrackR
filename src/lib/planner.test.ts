@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { initialFoods } from '../db/seed'
 import { SAMPLE_RECIPES } from '../db/sampleRecipes'
+import { PACK_FOODS, PACK_RECIPES } from '../db/pack'
 import { recipeTotals } from './nutrition'
 import { DEFAULT_SETTINGS, toISODate, weekDays, isTrainingDay } from './targets'
 import {
@@ -138,5 +139,24 @@ describe('gapLabel', () => {
   it('décrit l\'écart', () => {
     expect(gapLabel({ kcal: 2000, protein: 120, carbs: 0, fat: 0 }, { kcal: 2200, protein: 140, carbs: 0, fat: 0 })).toBe('−20 g de protéines · −200 kcal')
     expect(gapLabel({ kcal: 2210, protein: 141, carbs: 0, fat: 0 }, { kcal: 2200, protein: 140, carbs: 0, fat: 0 })).toBeNull()
+  })
+})
+
+describe('avec le pack de recettes', () => {
+  const allFoods = new Map([...initialFoods(), ...PACK_FOODS].map((f) => [f.id, f]))
+  const all: PlannerRecipe[] = [...SAMPLE_RECIPES, ...PACK_RECIPES].map((r) => ({ id: r.id, name: r.name, slots: r.slots, perServing: recipeTotals(r, allFoods).perServing }))
+  const allById = new Map(all.map((r) => [r.id, r]))
+  it('ne signale plus de manque de recettes et reste dans la cible', () => {
+    for (const seed of [1, 7, 42, 2026]) {
+      const r = generateWeek(input({ recipes: all }), seed)
+      expect(r.warnings, `graine ${seed}`).toEqual([])
+      const ok = dates.filter((d) => withinTolerance(dayTotal(r.meals.filter((m) => m.date === d), allById), dayTarget(trainingDates.has(d), DEFAULT_SETTINGS)))
+      expect(ok.length, `graine ${seed}`).toBeGreaterThanOrEqual(5)
+    }
+  })
+  it('varie davantage les petits-déjeuners', () => {
+    const r = generateWeek(input({ recipes: all }), 42)
+    const breakfasts = new Set(r.meals.filter((m) => m.slot === 'breakfast').map((m) => m.recipeId))
+    expect(breakfasts.size).toBeGreaterThanOrEqual(4)
   })
 })

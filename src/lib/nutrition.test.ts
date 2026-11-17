@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { initialFoods } from '../db/seed'
 import { SAMPLE_RECIPES } from '../db/sampleRecipes'
+import { PACK_FOODS, PACK_RECIPES } from '../db/pack'
 import { kcalFromMacros, macrosForGrams, normalize, recipeTotals, roundMacros } from './nutrition'
 import type { Food } from '../types'
 
@@ -67,5 +68,28 @@ describe('utilitaires', () => {
   })
   it('recalcule les kcal', () => {
     expect(kcalFromMacros(31, 0, 3.6)).toBeCloseTo(156.4)
+  })
+})
+
+describe('pack de recettes', () => {
+  const all = new Map([...initialFoods(), ...PACK_FOODS].map((f) => [f.id, f]))
+  it('a des identifiants uniques', () => {
+    const ids = [...initialFoods(), ...PACK_FOODS].map((f) => f.id)
+    expect(new Set(ids).size).toBe(ids.length)
+    const rids = [...SAMPLE_RECIPES, ...PACK_RECIPES].map((r) => r.id)
+    expect(new Set(rids).size).toBe(rids.length)
+  })
+  it('référence des aliments existants et vise assez de protéines', () => {
+    for (const r of PACK_RECIPES) {
+      const t = recipeTotals(r, all)
+      expect(t.missingFoodIds, r.name).toEqual([])
+      expect(t.perServing.protein, r.name).toBeGreaterThanOrEqual(r.slots.every((s) => s === 'snack') ? 15 : 30)
+    }
+  })
+  it('a des valeurs nutritionnelles cohérentes', () => {
+    for (const f of PACK_FOODS) {
+      expect(f.protein + f.carbs + f.fat, f.name).toBeLessThanOrEqual(100)
+      expect(Math.abs(kcalFromMacros(f.protein, f.carbs, f.fat) - f.kcal) / f.kcal, f.name).toBeLessThan(0.15)
+    }
   })
 })

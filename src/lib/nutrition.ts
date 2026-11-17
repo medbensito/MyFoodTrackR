@@ -78,6 +78,7 @@ export const CATEGORY_LABEL: Record<string, string> = {
   'matieres-grasses': 'Matières grasses',
   oleagineux: 'Oléagineux',
   maroc: 'Maroc',
+  complements: 'Compléments',
   autre: 'Autre',
 }
 

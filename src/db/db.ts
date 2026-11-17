@@ -3,6 +3,7 @@ import type { DayOverride, Food, LogEntry, PlannedMeal, Recipe, Settings, Shoppi
 import { DEFAULT_SETTINGS } from '../lib/targets'
 import { initialFoods } from './seed'
 import { SAMPLE_RECIPES } from './sampleRecipes'
+import { PACK_FOODS, PACK_RECIPES } from './pack'
 
 export class FoodTrackDB extends Dexie {
   foods!: EntityTable<Food, 'id'>
@@ -43,10 +44,21 @@ export class FoodTrackDB extends Dexie {
       dayOverrides: 'date',
     })
 
+    // v4 : pack de recettes protéinées. N'ajoute que ce qui manque, sans toucher aux données existantes.
+    this.version(4)
+      .stores({})
+      .upgrade(async (tx) => {
+        const foods = tx.table('foods'), recipes = tx.table('recipes')
+        const haveF = new Set(await foods.toCollection().primaryKeys())
+        const haveR = new Set(await recipes.toCollection().primaryKeys())
+        await foods.bulkAdd(PACK_FOODS.filter((x) => !haveF.has(x.id)))
+        await recipes.bulkAdd(PACK_RECIPES.filter((x) => !haveR.has(x.id)))
+      })
+
     // Exécuté une seule fois, à la création de la base sur l'appareil.
     this.on('populate', async (tx) => {
-      await tx.table('foods').bulkAdd(initialFoods())
-      await tx.table('recipes').bulkAdd(SAMPLE_RECIPES)
+      await tx.table('foods').bulkAdd([...initialFoods(), ...PACK_FOODS])
+      await tx.table('recipes').bulkAdd([...SAMPLE_RECIPES, ...PACK_RECIPES])
       await tx.table('settings').add(DEFAULT_SETTINGS)
     })
   }
