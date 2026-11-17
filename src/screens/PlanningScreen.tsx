@@ -6,6 +6,7 @@ import { usePlannerRecipes } from '../db/usePlannerRecipes'
 import { useNav } from '../nav'
 import { isTrainingDay, targetsForDate, toISODate, weekDays } from '../lib/targets'
 import { shortDay } from '../lib/labels'
+import { entryFromPlanned } from '../lib/journal'
 import { newId, roundMacros, scaleMacros, SLOT_LABEL, SLOT_ORDER } from '../lib/nutrition'
 import {
   dayTotal, gapLabel, generateWeek, slotTargets, suggestAdjustment, type Suggestion,
@@ -47,11 +48,20 @@ export function PlanningScreen({ settings }: { settings: Settings }) {
 
   const planner = usePlannerRecipes()
   const meals = useLiveQuery(() => db.plannedMeals.where('date').anyOf(dates).toArray(), [dates.join()])
+  const logs = useLiveQuery(() => db.logEntries.where('date').anyOf(dates).toArray(), [dates.join()])
 
-  if (!planner || !meals) return <div className="loading">Chargement…</div>
+  if (!planner || !meals || !logs) return <div className="loading">Chargement…</div>
   const { list: recipes, byId } = planner
 
   const mealsOf = (date: string) => meals.filter((m) => m.date === date)
+  const eatenIds = new Set(logs.map((l) => l.fromPlannedMealId).filter(Boolean))
+
+  const toggleEaten = async (meal: PlannedMeal) => {
+    const existing = logs.find((l) => l.fromPlannedMealId === meal.id)
+    if (existing) { await db.logEntries.delete(existing.id); return }
+    const recipe = byId.get(meal.recipeId)
+    if (recipe) await db.logEntries.add(entryFromPlanned(meal, recipe))
+  }
   const pinnedCount = meals.filter((m) => m.pinned).length
   const hasPlan = meals.length > 0
 
@@ -228,6 +238,7 @@ export function PlanningScreen({ settings }: { settings: Settings }) {
                               <span className="plan-meal-slot">
                                 {SLOT_LABEL[slot]}
                                 {meal?.pinned && <span className="pin" aria-label="Épinglé"><PinIcon size={12} filled /></span>}
+                                {meal && eatenIds.has(meal.id) && <span className="eaten-tag">Mangé</span>}
                               </span>
                               <strong className={meal && !r ? 'error' : undefined}>{r?.name ?? (meal ? 'Recette supprimée' : 'Ajouter un repas')}</strong>
                               {mm && meal && <span className="plan-meal-macros">{fmtFactor(meal.portionFactor)} · {mm.kcal} kcal · P {mm.protein} g</span>}
@@ -271,6 +282,8 @@ export function PlanningScreen({ settings }: { settings: Settings }) {
             setSuggestion(s ? { date: sheetMeal.date, s } : null)
           }}
           onOpenRecipe={(id) => { setSheet(null); nav.push({ type: 'recipe', id }) }}
+          eaten={!!sheetMeal && eatenIds.has(sheetMeal.id)}
+          onToggleEaten={() => { if (sheetMeal) toggleEaten(sheetMeal) }}
         />
       )}
     </>

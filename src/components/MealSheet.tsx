@@ -21,6 +21,8 @@ export type MealSheetProps = {
   onTogglePin: () => void
   onRemove: () => void
   onOpenRecipe: (recipeId: string) => void
+  eaten: boolean
+  onToggleEaten: () => void
 }
 
 const fmtFactor = (f: number) => `×${String(f).replace('.', ',')}`
@@ -91,6 +93,13 @@ export function MealSheet(p: MealSheetProps) {
             ) : (
               <div className="card"><p className="error">Cette recette a été supprimée.</p></div>
             )}
+
+            <button className={`eaten-btn ${p.eaten ? 'eaten-btn--on' : ''}`} aria-pressed={p.eaten} disabled={!recipe} onClick={p.onToggleEaten}>
+              <span className="eaten-check" aria-hidden>
+                <svg viewBox="0 0 24 24" width="18" height="18"><path d="M6 12.5l4 4L18 8.5" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
+              </span>
+              {p.eaten ? 'Mangé · ajouté au tracker' : 'Marquer comme mangé'}
+            </button>
 
             <div className="card">
               <div className="field">

@@ -46,6 +46,11 @@ export type LogEntry = {
   grams?: number
   portionFactor?: number
   fromPlannedMealId?: string
+  /** Instantané au moment de la saisie : le journal ne change pas si la recette est modifiée ensuite. */
+  name: string
+  macros: Macros
+  /** Horodatage de saisie (ms), pour l'ordre d'affichage. */
+  createdAt: number
 }
 
 export type Macros = { kcal: number; protein: number; carbs: number; fat: number }

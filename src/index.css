@@ -469,3 +469,51 @@ h1, h2, h3, p { margin: 0; }
 .cta--light { background: var(--surface); color: var(--accent); border: 1.5px solid var(--accent); box-shadow: none; }
 .bs-pin { display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 0.8rem; color: var(--muted); margin-top: 8px; }
 .stepper button:disabled { opacity: 0.35; }
+
+/* ——— M3 : tracker ——— */
+.ring-hint { position: relative; z-index: 1; text-align: center; margin-top: 12px; font-size: 0.92rem; color: rgba(255, 255, 255, 0.88); font-weight: 550; }
+.day-nav-label { display: inline-flex; align-items: center; gap: 8px; text-transform: capitalize; }
+.tile-bar { width: 72%; height: 5px; border-radius: 999px; background: var(--surface-2); overflow: hidden; margin-top: 6px; }
+.tile-bar span { display: block; height: 100%; border-radius: 999px; transition: width 0.3s; }
+.tile-bar--protein span { background: var(--protein); }
+.tile-bar--carbs span { background: var(--carbs); }
+.tile-bar--fat span { background: var(--fat); }
+.meal-thumb { opacity: 1; filter: none; }
+.meal-row--eaten .meal-info strong { color: var(--muted); }
+.meal-row--eaten .meal-thumb { opacity: 0.6; }
+.check-btn {
+  width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0; display: grid; place-items: center;
+  border: 2px solid var(--border); background: var(--surface); color: transparent; transition: all 0.15s;
+}
+.check-btn--on { background: var(--accent); border-color: var(--accent); color: #fff; }
+.check-btn:disabled { opacity: 0.3; }
+.empty--sm { padding: 16px; }
+.compare-cols { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.compare-col { display: flex; flex-direction: column; gap: 2px; }
+.compare-col:last-child { text-align: right; }
+.compare-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); font-weight: 700; }
+.compare-col strong { font-size: 1.15rem; font-variant-numeric: tabular-nums; }
+.compare-sep { color: var(--muted); font-size: 1.2rem; }
+.compare-delta { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); font-size: 0.85rem; color: var(--muted); }
+
+.segmented--top { margin: 0 0 10px; }
+.search-input--sheet { margin-bottom: 10px; flex: none; }
+.bottom-sheet--tall { min-height: 70vh; }
+.preview-card {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 8px; padding: 16px 18px; margin-bottom: 12px;
+  border-radius: var(--radius); color: #fff; font-size: 0.9rem; font-variant-numeric: tabular-nums;
+  background: linear-gradient(150deg, var(--brand-600), var(--brand-900));
+}
+.preview-card b { font-size: 1.1rem; }
+.preview-card .c-protein-text { color: #ffb37a !important; }
+.preview-kcal { font-size: 1.6rem; font-weight: 800; }
+.preview-kcal small { font-size: 0.9rem; font-weight: 600; }
+
+.eaten-btn {
+  width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 12px;
+  padding: 14px; border-radius: var(--radius); border: 1.5px solid var(--accent); background: var(--surface); color: var(--accent); font-weight: 700;
+}
+.eaten-btn--on { background: var(--accent); color: #fff; }
+.eaten-btn:disabled { opacity: 0.4; }
+.eaten-check { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; border: 2px solid currentColor; }
+.eaten-tag { font-size: 0.65rem; padding: 1px 6px; border-radius: 999px; background: var(--accent); color: #fff; letter-spacing: 0.02em; }
