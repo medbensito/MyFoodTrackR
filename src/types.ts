@@ -75,7 +75,11 @@ export type Settings = {
   lastExportAt?: number
   /** Date du dernier ajustement des cibles accepté (ms). */
   lastAdjustAt?: number
+  ramadan?: RamadanSettings
 }
+
+export type RamadanSession = 'before-ftour' | 'after-ftour' | 'none'
+export type RamadanSettings = { enabled: boolean; start: string; end: string; session: RamadanSession }
 
 /** Case cochée de la liste de courses : id = `${période}|${foodId}`. */
 export type ShoppingCheck = { id: string; checked: boolean }

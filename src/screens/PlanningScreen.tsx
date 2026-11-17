@@ -8,9 +8,10 @@ import { isoWeek, targetsForDate, toISODate, trainingOn, weekDays } from '../lib
 import { useOverrides } from '../db/useOverrides'
 import { DayTypeSheet } from '../components/DayTypeSheet'
 import { entryFromPlanned } from '../lib/journal'
-import { fmtFactor, newId, roundMacros, scaleMacros, SLOT_ORDER, SLOT_SHORT } from '../lib/nutrition'
+import { fmtFactor, newId, roundMacros, scaleMacros } from '../lib/nutrition'
+import { isRamadan, postTrainingSlot, ramadanDay, slotNames } from '../lib/ramadan'
 import {
-  dayTotal, gapLabel, generateWeek, POST_TRAINING_SLOT, slotTargets, suggestAdjustment, withinTolerance, type Suggestion,
+  dayTotal, gapLabel, generateWeek, slotTargets, suggestAdjustment, withinTolerance, type Suggestion,
 } from '../lib/planner'
 import { ScreenHeader, SquareButton } from '../components/ScreenHeader'
 import { MealSheet } from '../components/MealSheet'
@@ -74,7 +75,7 @@ export function PlanningScreen({ settings }: { settings: Settings }) {
     setBusy(true)
     const pinned = meals.filter((m) => m.pinned)
     const seed = (Date.now() ^ Math.floor(Math.random() * 1e9)) >>> 0
-    const result = generateWeek({ dates, trainingDates, settings, recipes, pinned }, seed)
+    const result = generateWeek({ dates, trainingDates, settings, recipes, pinned, postSlotFor: (d) => postTrainingSlot(d, settings) }, seed)
     await db.transaction('rw', db.plannedMeals, async () => {
       await db.plannedMeals.bulkDelete(meals.filter((m) => !m.pinned).map((m) => m.id))
       await db.plannedMeals.bulkPut(result.meals.filter((m) => !m.pinned).map((m) => ({ ...m, id: newId('pm') })))
@@ -109,10 +110,15 @@ export function PlanningScreen({ settings }: { settings: Settings }) {
   const range = first.getMonth() === last.getMonth()
     ? `${first.getDate()} — ${last.getDate()} ${MONTH.format(last).replace('.', '')}`
     : `${first.getDate()} ${MONTH.format(first).replace('.', '')} — ${last.getDate()} ${MONTH.format(last).replace('.', '')}`
-  const postSlot = POST_TRAINING_SLOT[settings.trainingTime]
-  const postLabel = { breakfast: 'au petit-déj', lunch: 'au déjeuner', dinner: 'au dîner', snack: 'à la collation' }[postSlot]
 
   const selDate = parseISO(selected)
+  const names = slotNames(selected, settings)
+  const postSlot = postTrainingSlot(selected, settings)
+  const rDay = ramadanDay(selected, settings)
+  const weekHasRamadan = dates.some((d) => isRamadan(d, settings))
+  const legend = postSlot
+    ? `${rDay ? 'jeûne · ' : ''}glucides en plus ${names.the[postSlot].toLowerCase().replace(/^(le|la) /, (m) => (m === 'le ' ? 'au ' : 'à la '))}`
+    : 'jeûne · pas de séance'
   const selTraining = trainingDates.has(selected)
   const selMeals = mealsOf(selected)
   const selStatus = dayStatus(selected)
@@ -130,6 +136,7 @@ export function PlanningScreen({ settings }: { settings: Settings }) {
           {hasPlan
             ? <span className="lime">· {okDays}/{plannedDays} dans la cible</span>
             : <span>· à planifier</span>}
+          {weekHasRamadan && <span className="tag tag--lime">Ramadan</span>}
           {weekOffset !== 0 && <button className="text-link" onClick={() => { setWeekOffset(0); setPicked(null) }}>· Cette semaine</button>}
         </>}
         action={<>
@@ -155,7 +162,7 @@ export function PlanningScreen({ settings }: { settings: Settings }) {
           })}
         </div>
         <div className="picker-legend">
-          <span><i />entraînement · glucides {postLabel}</span>
+          <span><i />{legend}</span>
           {hasPlan && (
             <button className="btn btn--outline btn--sm" onClick={generate} disabled={busy}>
               <RefreshIcon /> Régénérer
@@ -175,7 +182,7 @@ export function PlanningScreen({ settings }: { settings: Settings }) {
           <div className="day-card">
             <div className="day-card-head">
               <button className="day-type" onClick={() => setDayTypeFor(selected)} aria-label={`${LONG.format(selDate)}, ${selTraining ? 'entraînement' : 'repos'} : changer`}>
-                {LONG.format(selDate)} · <span className={selTraining ? 'lime' : undefined}>{selTraining ? 'Entraînement' : 'Repos'}</span>
+                {LONG.format(selDate)}{rDay ? ` · jour ${rDay}` : ''} · <span className={selTraining ? 'lime' : undefined}>{selTraining ? 'Entraînement' : 'Repos'}</span>
                 {overrides.has(selected) && <span className="tag">modifié</span>}
                 <ChevronIcon size={14} />
               </button>
@@ -201,7 +208,7 @@ export function PlanningScreen({ settings }: { settings: Settings }) {
             )}
 
             <div>
-              {SLOT_ORDER.map((slot) => {
+              {names.order.map((slot) => {
                 const meal = selMeals.find((m) => m.slot === slot)
                 const r = meal ? byId.get(meal.recipeId) : undefined
                 const mm = r && meal ? roundMacros(scaleMacros(r.perServing, meal.portionFactor)) : null
@@ -209,7 +216,7 @@ export function PlanningScreen({ settings }: { settings: Settings }) {
                 return (
                   <button key={slot} className="meal-btn" onClick={() => setSheet({ date: selected, slot })}>
                     <span className="meal-slot">
-                      {SLOT_SHORT[slot]}
+                      {names.short[slot]}
                       {(meal?.pinned || eaten) && (
                         <span className="marks">
                           {meal?.pinned && <span aria-label="Épinglé"><PinIcon /></span>}
@@ -275,7 +282,8 @@ export function PlanningScreen({ settings }: { settings: Settings }) {
           meal={sheetMeal}
           recipes={recipes}
           byId={byId}
-          slotTarget={slotTargets(trainingDates.has(sheet.date), settings)[sheet.slot]}
+          slotTarget={slotTargets(trainingDates.has(sheet.date), settings, postTrainingSlot(sheet.date, settings))[sheet.slot]}
+          slotLabel={slotNames(sheet.date, settings).label[sheet.slot]}
           onClose={() => setSheet(null)}
           onSetRecipe={(recipeId, factor) => saveMeal(
             sheetMeal

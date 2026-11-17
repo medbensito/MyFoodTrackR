@@ -7,6 +7,8 @@ import { InstallCard } from '../components/InstallCard'
 import { buildMacros } from '../lib/targets'
 import type { Macros, Settings, TrainingTime } from '../types'
 import { GOAL_LABEL } from '../lib/labels'
+import { DEFAULT_RAMADAN } from '../lib/ramadan'
+import type { RamadanSession } from '../types'
 import { ScreenHeader } from '../components/ScreenHeader'
 
 // Affichage lundi → dimanche, valeurs JS getDay()
@@ -70,6 +72,12 @@ function isValid(s: Settings): boolean {
   return nums.every((n) => Number.isFinite(n) && n > 0)
 }
 
+const SESSIONS: { value: RamadanSession; label: string }[] = [
+  { value: 'before-ftour', label: 'Avant ftour' },
+  { value: 'after-ftour', label: 'Après ftour' },
+  { value: 'none', label: 'Aucune' },
+]
+
 const GOALS = (Object.keys(GOAL_LABEL) as Settings['goal'][]).map((g) => ({ value: g, label: GOAL_LABEL[g].short }))
 
 export function SettingsScreen({ settings, onBack }: { settings: Settings; onBack: () => void }) {
@@ -89,6 +97,7 @@ export function SettingsScreen({ settings, onBack }: { settings: Settings; onBac
   // La date d'export est gérée à part : elle ne doit ni rendre le formulaire « modifié », ni être écrasée.
   const comparable = (x: Settings) => JSON.stringify({ ...x, lastExportAt: undefined })
   const dirty = comparable(draft) !== comparable(settings)
+  const ramadan = draft.ramadan ?? DEFAULT_RAMADAN
   const valid = isValid(draft)
   const proteinPerKg = draft.weightKg > 0 ? (draft.targets.training.protein / draft.weightKg).toFixed(1).replace('.', ',') : '—'
 
@@ -156,6 +165,43 @@ export function SettingsScreen({ settings, onBack }: { settings: Settings; onBac
             </button>
           ))}
         </div>
+      </div>
+
+      <div className="card">
+        <h2>Ramadan</h2>
+        <label className="field">
+          <span>
+            Mode Ramadan
+            <span className="small muted block">S'hour, ftour, collation du soir et dîner à la place des repas habituels</span>
+          </span>
+          <input type="checkbox" className="switch" checked={ramadan.enabled}
+            onChange={(e) => update({ ramadan: { ...ramadan, enabled: e.target.checked } })} />
+        </label>
+        {ramadan.enabled && (
+          <>
+            <label className="field">
+              <span>Premier jour</span>
+              <input className="input" type="date" value={ramadan.start} onChange={(e) => update({ ramadan: { ...ramadan, start: e.target.value } })} />
+            </label>
+            <label className="field">
+              <span>Dernier jour</span>
+              <input className="input" type="date" value={ramadan.end} min={ramadan.start} onChange={(e) => update({ ramadan: { ...ramadan, end: e.target.value } })} />
+            </label>
+            <span className="caps" style={{ display: 'block', marginTop: 10 }}>Séance pendant le jeûne</span>
+            <div className="segmented" role="radiogroup" aria-label="Séance pendant le Ramadan">
+              {SESSIONS.map((x) => (
+                <button key={x.value} role="radio" aria-checked={ramadan.session === x.value}
+                  className={ramadan.session === x.value ? 'seg--on' : ''} onClick={() => update({ ramadan: { ...ramadan, session: x.value } })}>
+                  {x.label}
+                </button>
+              ))}
+            </div>
+            <p className="muted small" style={{ marginTop: 10 }}>
+              Dates prévisionnelles (calculs astronomiques) : ajuste-les après l'annonce officielle du ministère des Habous.
+              {ramadan.session === 'none' ? ' Sans séance, tous les jours du Ramadan passent en cible repos.' : ' Les glucides en plus vont au repas qui suit la séance.'}
+            </p>
+          </>
+        )}
       </div>
 
       <div className="card">

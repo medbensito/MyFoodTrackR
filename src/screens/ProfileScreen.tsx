@@ -8,9 +8,13 @@ import { daysSince } from '../lib/backup'
 import { GOAL_LABEL, TIME_LABEL, trainingDaysLabel } from '../lib/labels'
 import { ScreenHeader, SquareButton } from '../components/ScreenHeader'
 import { WeightCard } from '../components/WeightCard'
+import { MoonIcon } from '../components/icons'
 import {
   CalendarIcon, ChevronIcon, ClockIcon, DatabaseIcon, GearIcon, PencilIcon, SaveIcon, TargetIcon, TargetsIcon,
 } from '../components/icons'
+
+const SHORT = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'long' })
+const fmtShort = (iso: string) => { const [y, m, d] = iso.split('-').map(Number); return SHORT.format(new Date(y, m - 1, d)) }
 
 function PrefRow({ icon, label, value, onClick, warn }: { icon: ReactNode; label: string; value: string; onClick: () => void; warn?: boolean }) {
   return (
@@ -77,6 +81,11 @@ export function ProfileScreen({ settings }: { settings: Settings }) {
           <ul>
             <PrefRow icon={<CalendarIcon />} label="Jours d'entraînement" value={trainingDaysLabel(settings.trainingDays)} onClick={onOpenSettings} />
             <PrefRow icon={<ClockIcon />} label="Moment de la séance" value={TIME_LABEL[settings.trainingTime]} onClick={onOpenSettings} />
+            <PrefRow
+              icon={<MoonIcon />} label="Ramadan"
+              value={settings.ramadan?.enabled ? `Du ${fmtShort(settings.ramadan.start)} au ${fmtShort(settings.ramadan.end)}` : 'Désactivé'}
+              onClick={onOpenSettings}
+            />
             <PrefRow
               icon={<TargetsIcon />} label="Cibles repos / entraînement"
               value={`${settings.targets.rest.kcal} / ${settings.targets.training.kcal} kcal · ${settings.targets.training.protein} g P`}

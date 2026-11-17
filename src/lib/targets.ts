@@ -17,10 +17,17 @@ export function isTrainingDay(date: Date, trainingDays: number[]): boolean {
 /** Exceptions ponctuelles : date ISO → séance (true) ou repos (false). */
 export type Overrides = Map<string, boolean>
 
-/** Jour d'entraînement, en tenant compte d'une séance sautée ou ajoutée ce jour-là. */
-export function trainingOn(date: Date, settings: Pick<Settings, 'trainingDays'>, overrides?: Overrides): boolean {
-  const o = overrides?.get(toISODate(date))
-  return o ?? isTrainingDay(date, settings.trainingDays)
+/**
+ * Jour d'entraînement, en tenant compte d'une séance sautée ou ajoutée ce jour-là,
+ * et du Ramadan si l'utilisateur a choisi de ne pas s'entraîner pendant le jeûne.
+ */
+export function trainingOn(date: Date, settings: Pick<Settings, 'trainingDays' | 'ramadan'>, overrides?: Overrides): boolean {
+  const iso = toISODate(date)
+  const o = overrides?.get(iso)
+  if (o !== undefined) return o
+  const r = settings.ramadan
+  if (r?.enabled && r.session === 'none' && iso >= r.start && iso <= r.end) return false
+  return isTrainingDay(date, settings.trainingDays)
 }
 
 export function targetsForDate(date: Date, settings: Settings, overrides?: Overrides): Macros {

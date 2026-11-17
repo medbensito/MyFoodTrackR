@@ -22,6 +22,8 @@ export type MealSheetProps = {
   onOpenRecipe: (recipeId: string) => void
   eaten: boolean
   onToggleEaten: () => void
+  /** Nom du créneau ce jour-là (Ftour, S'hour… pendant le Ramadan). */
+  slotLabel?: string
 }
 
 export function MealSheet(p: MealSheetProps) {
@@ -41,7 +43,7 @@ export function MealSheet(p: MealSheetProps) {
 
   return (
     <div className="sheet-backdrop" onClick={p.onClose}>
-      <div className="bottom-sheet" role="dialog" aria-modal="true" aria-label={`${SLOT_LABEL[p.slot]}, ${dayLabel}`} onClick={(e) => e.stopPropagation()}>
+      <div className="bottom-sheet" role="dialog" aria-modal="true" aria-label={`${p.slotLabel ?? SLOT_LABEL[p.slot]}, ${dayLabel}`} onClick={(e) => e.stopPropagation()}>
         <div className="grabber" />
         <div className="bs-head">
           {choosing && p.meal && (
@@ -49,7 +51,7 @@ export function MealSheet(p: MealSheetProps) {
           )}
           <div className="bs-titles">
             <span className="caps caps--lime">{dayLabel}</span>
-            <strong>{choosing ? 'Choisir une recette' : SLOT_LABEL[p.slot]}</strong>
+            <strong>{choosing ? 'Choisir une recette' : p.slotLabel ?? SLOT_LABEL[p.slot]}</strong>
           </div>
           <button className="bs-close" onClick={p.onClose}>Fermer</button>
         </div>

@@ -2,8 +2,9 @@ import { useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db/db'
 import type { MealSlot, Recipe } from '../types'
-import { fmtFactor, newId, SLOT_LABEL, SLOT_ORDER } from '../lib/nutrition'
+import { fmtFactor, newId } from '../lib/nutrition'
 import { toISODate } from '../lib/targets'
+import { slotNames } from '../lib/ramadan'
 
 const DN = ['DIM', 'LUN', 'MAR', 'MER', 'JEU', 'VEN', 'SAM']
 
@@ -16,8 +17,10 @@ export function AddToPlanSheet({ recipe, factor, onClose, onDone }: {
 }) {
   const days = Array.from({ length: 7 }, (_, i) => { const d = new Date(); d.setDate(d.getDate() + i); return d })
   const dates = days.map(toISODate)
-  const slots = SLOT_ORDER.filter((s) => recipe.slots.includes(s))
+  const settings = useLiveQuery(() => db.settings.get('main'), [])
   const [date, setDate] = useState(dates[0])
+  const names = slotNames(date, settings ?? {})
+  const slots = names.order.filter((s) => recipe.slots.includes(s))
   const [slot, setSlot] = useState<MealSlot>(slots[0] ?? 'lunch')
   const current = useLiveQuery(() => db.plannedMeals.where('[date+slot]').equals([date, slot]).first(), [date, slot])
   const currentRecipe = useLiveQuery(async () => (current ? db.recipes.get(current.recipeId) : undefined), [current?.recipeId])
@@ -28,7 +31,7 @@ export function AddToPlanSheet({ recipe, factor, onClose, onDone }: {
       await db.plannedMeals.add({ id: newId('pm'), date, slot, recipeId: recipe.id, portionFactor: factor, pinned: true })
     })
     const d = days[dates.indexOf(date)]
-    onDone(`${SLOT_LABEL[slot]} du ${DN[d.getDay()].toLowerCase()}. ${d.getDate()}`)
+    onDone(`${names.label[slot]} du ${DN[d.getDay()].toLowerCase()}. ${d.getDate()}`)
   }
 
   return (
@@ -58,7 +61,7 @@ export function AddToPlanSheet({ recipe, factor, onClose, onDone }: {
         <div className="toggle-chips" role="radiogroup" aria-label="Créneau" style={{ marginTop: 8 }}>
           {slots.map((s) => (
             <button key={s} role="radio" aria-checked={slot === s} className={`chip chip--sm ${slot === s ? 'chip--on' : ''}`} onClick={() => setSlot(s)}>
-              {SLOT_LABEL[s]}
+              {names.label[s]}
             </button>
           ))}
         </div>

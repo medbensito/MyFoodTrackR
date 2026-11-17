@@ -6,6 +6,7 @@ import type { Settings } from '../types'
 import { isTrainingDay } from '../lib/targets'
 import { generateWeek } from '../lib/planner'
 import { newId } from '../lib/nutrition'
+import { postTrainingSlot } from '../lib/ramadan'
 
 const DAY_FMT = new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })
 
@@ -50,6 +51,7 @@ export function DayTypeSheet({ date, training, settings, onClose }: {
         settings,
         recipes: planner.list,
         pinned: fixed,
+        postSlotFor: (d) => postTrainingSlot(d, settings),
       }, seed)
       const keepIds = new Set(keep.map((x) => x.id))
       await db.transaction('rw', db.plannedMeals, async () => {

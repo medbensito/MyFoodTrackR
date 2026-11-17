@@ -5,22 +5,27 @@ import type { Food, LogEntry, MealSlot } from '../types'
 import type { PlannerRecipe } from '../lib/planner'
 import { fmtFactor, macrosForGrams, normalize, roundMacros, scaleMacros, SLOT_LABEL, SLOT_ORDER } from '../lib/nutrition'
 import { entryFromFood, entryFromRecipe, recentItems, slotForHour, type RecentItem } from '../lib/journal'
+import type { SlotNames } from '../lib/ramadan'
 import { BackIcon, ChevronIcon, PlusIcon, StarIcon } from './icons'
 
 type Picked = { kind: 'recipe'; r: PlannerRecipe } | { kind: 'food'; f: Food }
 
 /** Ajout libre au journal : une recette (en portions) ou un aliment (en grammes). */
-export function AddEntrySheet({ date, recipes, foods, onAdd, onClose }: {
+export function AddEntrySheet({ date, recipes, foods, onAdd, onClose, names, defaultSlot }: {
   date: string
   recipes: PlannerRecipe[]
   foods: Food[]
+  names?: SlotNames
+  defaultSlot?: MealSlot
   onAdd: (e: LogEntry) => void
   onClose: () => void
 }) {
   const [mode, setMode] = useState<'recipe' | 'food'>('recipe')
   const [query, setQuery] = useState('')
   const [picked, setPicked] = useState<Picked | null>(null)
-  const [slot, setSlot] = useState<MealSlot>(slotForHour(new Date().getHours()))
+  const [slot, setSlot] = useState<MealSlot>(defaultSlot ?? slotForHour(new Date().getHours()))
+  const order = names?.order ?? SLOT_ORDER
+  const label = names?.label ?? SLOT_LABEL
   const [factor, setFactor] = useState(1)
   const [grams, setGrams] = useState(100)
 
@@ -39,7 +44,7 @@ export function AddEntrySheet({ date, recipes, foods, onAdd, onClose }: {
   const quickAdd = (it: RecentItem) => {
     const t = recentTarget(it)
     if (!t) return
-    const s = slotForHour(new Date().getHours())
+    const s = defaultSlot ?? slotForHour(new Date().getHours())
     onAdd(t.kind === 'recipe' ? entryFromRecipe(date, s, t.r, it.portionFactor ?? 1) : entryFromFood(date, s, t.f, it.grams ?? t.f.defaultPortionG))
   }
   const openRecent = (it: RecentItem) => {
@@ -196,9 +201,9 @@ export function AddEntrySheet({ date, recipes, foods, onAdd, onClose }: {
               <div className="stack-field">
                 <span>Créneau</span>
                 <div className="toggle-chips">
-                  {SLOT_ORDER.map((s) => (
+                  {order.map((s) => (
                     <button key={s} aria-pressed={slot === s} className={`chip chip--sm ${slot === s ? 'chip--on' : ''}`} onClick={() => setSlot(s)}>
-                      {SLOT_LABEL[s]}
+                      {label[s]}
                     </button>
                   ))}
                 </div>

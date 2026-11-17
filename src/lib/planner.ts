@@ -33,6 +33,8 @@ export type PlannerInput = {
   recipes: PlannerRecipe[]
   /** Repas épinglés de la semaine : conservés tels quels. */
   pinned: PlannedMeal[]
+  /** Repas qui suit la séance, jour par jour (mode Ramadan). */
+  postSlotFor?: (date: string) => MealSlot | null
 }
 
 export type PlannerResult = { meals: PlannedMeal[]; warnings: string[] }
@@ -58,15 +60,17 @@ function sub(a: Macros, b: Macros): Macros {
 export function slotTargets(
   isTraining: boolean,
   settings: Pick<Settings, 'targets' | 'trainingTime'>,
+  /** Repas qui suit la séance ; par défaut selon l'heure de séance habituelle. `null` : pas de supplément ciblé. */
+  postSlot?: MealSlot | null,
 ): Record<MealSlot, Macros> {
   const { rest, training } = settings.targets
   const extra = isTraining ? sub(training, rest) : ZERO
-  const post = POST_TRAINING_SLOT[settings.trainingTime]
+  const post = postSlot === undefined ? POST_TRAINING_SLOT[settings.trainingTime] : postSlot
   const out = {} as Record<MealSlot, Macros>
   for (const s of SLOT_ORDER) {
     const k = KCAL_SHARE[s]
     const base: Macros = { kcal: rest.kcal * k, protein: rest.protein * PROTEIN_SHARE[s], carbs: rest.carbs * k, fat: rest.fat * k }
-    out[s] = s === post ? addMacros(base, extra) : base
+    out[s] = post === null ? addMacros(base, scaleMacros(extra, k)) : s === post ? addMacros(base, extra) : base
   }
   return out
 }
@@ -144,7 +148,7 @@ export function generateWeek(input: PlannerInput, seed: number): PlannerResult {
   dates.forEach((date, di) => {
     const training = trainingDates.has(date)
     const target = dayTarget(training, settings)
-    const slotT = slotTargets(training, settings)
+    const slotT = slotTargets(training, settings, input.postSlotFor ? input.postSlotFor(date) : undefined)
     const pinnedToday = input.pinned.filter((p) => p.date === date)
     const pinnedSlots = new Set(pinnedToday.map((p) => p.slot))
     const freeSlots = SLOT_ORDER.filter((s) => !pinnedSlots.has(s))

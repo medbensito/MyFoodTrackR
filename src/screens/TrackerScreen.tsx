@@ -7,7 +7,8 @@ import { usePlannerRecipes } from '../db/usePlannerRecipes'
 import { targetsForDate, toISODate, trainingOn } from '../lib/targets'
 import { useOverrides } from '../db/useOverrides'
 import { DayTypeSheet } from '../components/DayTypeSheet'
-import { fmtFactor, roundMacros, scaleMacros, SLOT_LABEL, SLOT_ORDER, SLOT_SHORT, SLOT_THE } from '../lib/nutrition'
+import { fmtFactor, roundMacros, scaleMacros } from '../lib/nutrition'
+import { postTrainingSlot, ramadanDay, slotAt, slotNames } from '../lib/ramadan'
 import { dayTotal } from '../lib/planner'
 import { entryFromPlanned, totalOf } from '../lib/journal'
 import { ScreenHeader, SquareButton } from '../components/ScreenHeader'
@@ -74,16 +75,19 @@ export function TrackerScreen({ settings }: { settings: Settings }) {
 
   if (!planner || !foods || !planned || !entries || !overrides) return <div className="loading">Chargement…</div>
 
+  const names = slotNames(iso, settings)
+  const postSlot = postTrainingSlot(iso, settings)
+  const rDay = ramadanDay(iso, settings)
   const t = targetsForDate(day, settings, overrides)
   const training = trainingOn(day, settings, overrides)
   const consumed = roundMacros(totalOf(entries))
   const plannedTotal = roundMacros(dayTotal(planned, planner.byId))
-  const plannedSorted = [...planned].sort((a, b) => SLOT_ORDER.indexOf(a.slot) - SLOT_ORDER.indexOf(b.slot))
+  const plannedSorted = [...planned].sort((a, b) => names.order.indexOf(a.slot) - names.order.indexOf(b.slot))
   const eatenIds = new Set(entries.map((e) => e.fromPlannedMealId).filter(Boolean))
   const next = plannedSorted.find((m) => !eatenIds.has(m.id) && planner.byId.has(m.recipeId))
   const extra = entries
     .filter((e) => !e.fromPlannedMealId)
-    .sort((a, b) => SLOT_ORDER.indexOf(a.slot ?? 'snack') - SLOT_ORDER.indexOf(b.slot ?? 'snack') || a.createdAt - b.createdAt)
+    .sort((a, b) => names.order.indexOf(a.slot ?? 'snack') - names.order.indexOf(b.slot ?? 'snack') || a.createdAt - b.createdAt)
 
   const togglePlanned = async (mealId: string) => {
     const existing = entries.find((e) => e.fromPlannedMealId === mealId)
@@ -100,12 +104,11 @@ export function TrackerScreen({ settings }: { settings: Settings }) {
   let hint: ReactNode
   if (leftP === 0) hint = <>Objectif protéines atteint{leftK > 0 ? <>, encore <strong>{leftK} kcal</strong> dans ta cible.</> : '.'}</>
   else if (next) {
-    hint = <>Encore <strong>{leftP} g</strong>. {SLOT_THE[next.slot]} prévu {Math.abs(nextP - leftP) <= 3 ? 'les apporte pile.' : `en apporte ${nextP} g.`}</>
+    hint = <>Encore <strong>{leftP} g</strong>. {names.the[next.slot]} prévu {Math.abs(nextP - leftP) <= 3 ? 'les apporte pile.' : `en apporte ${nextP} g.`}</>
   } else hint = <>Encore <strong>{leftP} g</strong> pour atteindre ta cible.</>
 
-  const subtitle = offset === 0
-    ? `${clean(SUB_FMT.format(day))} · ${training ? 'Entraînement' : 'Repos'}`
-    : training ? 'Entraînement' : 'Repos'
+  const kind = `${rDay ? `Ramadan j${rDay} · ` : ''}${training ? 'Entraînement' : 'Repos'}`
+  const subtitle = offset === 0 ? `${clean(SUB_FMT.format(day))} · ${kind}` : kind
 
   return (
     <>
@@ -164,7 +167,7 @@ export function TrackerScreen({ settings }: { settings: Settings }) {
               const eaten = eatenIds.has(m.id)
               const isNext = next?.id === m.id
               const mm = r ? roundMacros(scaleMacros(r.perServing, m.portionFactor)) : null
-              const after = m.slot === 'breakfast' && training && settings.trainingTime === 'morning' ? ' · après séance' : ''
+              const after = training && m.slot === postSlot ? ' · après séance' : ''
               return (
                 <div key={m.id} className={`tl-row ${eaten ? 'tl-row--done' : ''} ${isNext ? 'tl-row--next' : ''}`}>
                   <button
@@ -177,7 +180,7 @@ export function TrackerScreen({ settings }: { settings: Settings }) {
                     <span>{eaten && <CheckIcon />}</span>
                   </button>
                   <div className="tl-body">
-                    <span className="caps">{SLOT_SHORT[m.slot]}{isNext ? ' · suivant' : after}</span>
+                    <span className="caps">{names.short[m.slot]}{isNext ? ' · suivant' : after}</span>
                     <strong>{r?.name ?? 'Recette supprimée'}</strong>
                     {isNext && mm && <span className="tl-meta">{fmtFactor(m.portionFactor)} · {mm.kcal} kcal · {mm.protein} g P</span>}
                   </div>
@@ -201,7 +204,7 @@ export function TrackerScreen({ settings }: { settings: Settings }) {
                 return (
                   <div key={e.id} className="extra-row">
                     <div className="tl-body">
-                      <span className="caps">{e.slot ? SLOT_LABEL[e.slot] : 'Repas'}</span>
+                      <span className="caps">{e.slot ? names.label[e.slot] : 'Repas'}</span>
                       <strong>{e.name}</strong>
                       <span className="tl-meta">{e.grams ? `${e.grams} g` : fmtFactor(e.portionFactor ?? 1)} · {mm.kcal} kcal · {mm.protein} g P</span>
                     </div>
@@ -241,6 +244,8 @@ export function TrackerScreen({ settings }: { settings: Settings }) {
           date={iso}
           recipes={planner.list}
           foods={foods}
+          names={names}
+          defaultSlot={slotAt(new Date(), iso, settings)}
           onClose={() => setAdding(false)}
           onAdd={async (e) => { await db.logEntries.add(e); setAdding(false) }}
         />

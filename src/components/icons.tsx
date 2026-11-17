@@ -69,3 +69,6 @@ export const StarIcon = ({ size = 20, filled }: P) => (
 export const TrophyIcon = ({ size = 20 }: P) => (
   <svg {...base(size)}><path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8.5 20h7M10 17h4v3h-4z" /></svg>
 )
+export const MoonIcon = ({ size = 22 }: P) => (
+  <svg {...base(size)}><path d="M19.5 14.5A8 8 0 0 1 9.5 4.5a8 8 0 1 0 10 10z" /></svg>
+)
