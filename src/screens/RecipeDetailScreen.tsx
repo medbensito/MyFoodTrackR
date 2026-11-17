@@ -7,6 +7,7 @@ import { macroShares } from '../lib/labels'
 import { fmtFactor, macrosForGrams, recipeTotals, roundMacros, scaleMacros, SLOT_LABEL, SLOT_ORDER } from '../lib/nutrition'
 import { ScreenHeader } from '../components/ScreenHeader'
 import { AddToPlanSheet } from '../components/AddToPlanSheet'
+import { StarIcon } from '../components/icons'
 
 export function RecipeDetailScreen({ id }: { id: string }) {
   const nav = useNav()
@@ -32,7 +33,14 @@ export function RecipeDetailScreen({ id }: { id: string }) {
     <>
       <ScreenHeader
         back={nav.pop}
-        backAction={<button className="btn btn--sm" onClick={edit}>Modifier</button>}
+        backAction={<div className="head-actions">
+          <button className={`sq-btn ${recipe.favorite ? 'lime' : ''}`} aria-pressed={!!recipe.favorite}
+            aria-label={recipe.favorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+            onClick={() => db.recipes.update(id, { favorite: !recipe.favorite })}>
+            <StarIcon filled={!!recipe.favorite} />
+          </button>
+          <button className="btn btn--sm" onClick={edit}>Modifier</button>
+        </div>}
       />
 
       <section className="screen" style={{ paddingBottom: 'calc(var(--safe-bottom) + 120px)' }}>

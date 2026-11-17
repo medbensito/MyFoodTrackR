@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { initialFoods } from '../db/seed'
-import { entryFromFood, entryFromPlanned, entryFromRecipe, remainingLabel, slotForHour, totalOf } from './journal'
+import { entryFromFood, entryFromPlanned, entryFromRecipe, recentItems, remainingLabel, slotForHour, totalOf } from './journal'
 import { roundMacros } from './nutrition'
 import type { PlannerRecipe } from './planner'
 
@@ -36,5 +36,21 @@ describe('journal', () => {
     expect(remainingLabel({ kcal: 1500, protein: 100, carbs: 0, fat: 0 }, target)).toBe('Il te reste 40 g de protéines et 700 kcal.')
     expect(remainingLabel({ kcal: 2210, protein: 145, carbs: 0, fat: 0 }, target)).toBe('Objectif atteint pour aujourd\'hui.')
     expect(remainingLabel({ kcal: 2500, protein: 150, carbs: 0, fat: 0 }, target)).toBe('Calories dépassées de 300 kcal.')
+  })
+})
+
+describe('recentItems', () => {
+  it('garde les derniers ajouts hors plan, sans doublon', () => {
+    const banane = foods.get('banane')!
+    const e = [
+      entryFromFood('2026-11-15', 'snack', banane, 120, 1),
+      entryFromRecipe('2026-11-16', 'lunch', recipe, 1, 2),
+      entryFromFood('2026-11-16', 'snack', banane, 120, 3),
+      entryFromFood('2026-11-17', 'snack', banane, 200, 4),
+      entryFromPlanned({ id: 'pm1', date: '2026-11-17', slot: 'lunch', recipeId: 'r1', portionFactor: 1, pinned: false }, recipe, 5),
+    ]
+    const r = recentItems(e)
+    expect(r.map((x) => x.key)).toEqual(['f:banane|200', 'f:banane|120', 'r:r1|1'])
+    expect(recentItems(e, 1)).toHaveLength(1)
   })
 })

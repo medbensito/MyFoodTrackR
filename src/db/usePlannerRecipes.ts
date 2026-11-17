@@ -11,7 +11,7 @@ export function usePlannerRecipes(): { list: PlannerRecipe[]; byId: Map<string, 
   const foods = useFoodsMap()
   return useMemo(() => {
     if (!recipes || !foods) return undefined
-    const list = recipes.map((r) => ({ id: r.id, name: r.name, slots: r.slots, perServing: recipeTotals(r, foods).perServing }))
+    const list = recipes.map((r) => ({ id: r.id, name: r.name, slots: r.slots, perServing: recipeTotals(r, foods).perServing, favorite: !!r.favorite }))
     return { list, byId: new Map(list.map((r) => [r.id, r])) }
   }, [recipes, foods])
 }

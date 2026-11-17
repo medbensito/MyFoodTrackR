@@ -53,3 +53,28 @@ export function remainingLabel(consumed: Macros, target: Macros): string {
   if (parts.length === 0) return `Calories dépassées de ${-k} kcal.`
   return `Il te reste ${parts.join(' et ')}.`
 }
+
+export type RecentItem = {
+  key: string
+  recipeId?: string
+  foodId?: string
+  grams?: number
+  portionFactor?: number
+  name: string
+  macros: Macros
+}
+
+/** Derniers ajouts hors plan, sans doublon (même recette ou aliment, même quantité). */
+export function recentItems(entries: LogEntry[], limit = 6): RecentItem[] {
+  const out: RecentItem[] = []
+  const seen = new Set<string>()
+  for (const e of [...entries].sort((a, b) => b.createdAt - a.createdAt)) {
+    if (e.fromPlannedMealId || (!e.recipeId && !e.foodId)) continue
+    const key = e.recipeId ? `r:${e.recipeId}|${e.portionFactor ?? 1}` : `f:${e.foodId}|${e.grams ?? 0}`
+    if (seen.has(key)) continue
+    seen.add(key)
+    out.push({ key, recipeId: e.recipeId, foodId: e.foodId, grams: e.grams, portionFactor: e.portionFactor, name: e.name, macros: e.macros })
+    if (out.length >= limit) break
+  }
+  return out
+}

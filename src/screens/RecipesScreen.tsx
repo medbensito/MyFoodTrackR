@@ -69,7 +69,7 @@ export function RecipesScreen() {
             <button key={r.id} className="list-row" onClick={() => nav.push({ type: 'recipe', id: r.id })}>
               <span className="list-main">
                 <strong>{r.name}</strong>
-                <span className="caps">{SLOT_ORDER.filter((s) => r.slots.includes(s)).map((s) => SLOT_LABEL[s]).join(' / ')}</span>
+                <span className="caps">{r.favorite && <span className="lime">★ </span>}{SLOT_ORDER.filter((s) => r.slots.includes(s)).map((s) => SLOT_LABEL[s]).join(' / ')}</span>
               </span>
               <span className="list-num"><span className="k">{m.kcal}</span><br /><span className="p">{m.protein} g P</span></span>
               <span className="chev"><ChevronIcon /></span>

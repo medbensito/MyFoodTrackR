@@ -355,3 +355,8 @@ input, select, textarea { font: inherit; }
 .shop-qty small { font-size: 15px; color: var(--muted); font-weight: 600; }
 .day-type { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0; border: 0; background: none; color: var(--muted); font-size: 12px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; text-align: left; }
 .day-type .tag { letter-spacing: 0.06em; }
+.recent-open { border: 0; background: none; color: inherit; text-align: left; padding: 10px 0; min-height: 60px; justify-content: center; }
+.recent-add { color: var(--lime); border-color: #3a423d; }
+.chip--fav { display: inline-flex; align-items: center; gap: 6px; height: 40px; text-transform: none; letter-spacing: 0; font-family: var(--body); font-weight: 600; font-size: 13.5px; color: var(--text); }
+.chip--fav svg { color: var(--lime); }
+.sq-btn.lime { color: var(--lime); border-color: var(--lime); }

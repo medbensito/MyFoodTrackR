@@ -24,7 +24,7 @@ export const WEIGHTS = { proteinDeficit: 3, proteinExcess: 0.3, kcal: 1, carbs: 
 /** Tolérances d'une journée réussie. */
 export const TOLERANCE = { kcalPct: 0.05, proteinMinus: 5 }
 
-export type PlannerRecipe = { id: string; name: string; slots: MealSlot[]; perServing: Macros }
+export type PlannerRecipe = { id: string; name: string; slots: MealSlot[]; perServing: Macros; favorite?: boolean }
 
 export type PlannerInput = {
   dates: string[]

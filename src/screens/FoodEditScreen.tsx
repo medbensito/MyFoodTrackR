@@ -4,6 +4,7 @@ import { useNav } from '../nav'
 import type { Food, FoodState, Recipe } from '../types'
 import { CATEGORY_LABEL, kcalFromMacros, newId } from '../lib/nutrition'
 import { ScreenHeader } from '../components/ScreenHeader'
+import { StarIcon } from '../components/icons'
 
 const STATES: FoodState[] = ['cru', 'cuit', 'conserve', 'liquide', 'solide', 'nature', 'sec']
 
@@ -63,7 +64,14 @@ export function FoodEditScreen({ id }: { id: string | null }) {
 
   return (
     <>
-      <ScreenHeader title={id ? draft.name || 'Aliment' : 'Nouvel aliment'} subtitle="Valeurs pour 100 g" back={nav.pop} />
+      <ScreenHeader title={id ? draft.name || 'Aliment' : 'Nouvel aliment'} subtitle="Valeurs pour 100 g" back={nav.pop}
+        backAction={
+          <button className={`sq-btn ${draft.favorite ? 'lime' : ''}`} aria-pressed={!!draft.favorite}
+            aria-label={draft.favorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+            onClick={async () => { if (id) await db.foods.update(id, { favorite: !draft.favorite }); update({ favorite: !draft.favorite }) }}>
+            <StarIcon filled={!!draft.favorite} />
+          </button>
+        } />
 
       <section className="screen">
         <div className="card">
