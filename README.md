@@ -4,7 +4,15 @@ Design : direction A « Nuit athlétique » (fond noir, citron #C8F560, Barlow C
 
 PWA personnelle de nutrition : planning de la semaine, recettes avec macros, tracker de protéines. Tout est stocké localement sur l'appareil (IndexedDB).
 
-## État : v1.0.0 — jalon M4 terminé
+## État : v2.0.0
+
+- Liste de courses depuis le planning (rayons, cases à cocher, partage en texte)
+- Séance sautée ou ajoutée : change la cible du jour et peut recomposer les repas restants
+- Favoris et récents dans « Ajouter un repas » (ajout en un tap)
+- Bilan de la semaine : jours réussis, série, protéines par jour, 4 dernières semaines
+- Pack de 16 recettes protéinées, dont tajine de poulet, kefta aux œufs, harira, loubia
+
+### v1.0.0 — jalon M4
 
 - Sauvegarde : export JSON (feuille de partage iOS → « Enregistrer dans Fichiers », sinon téléchargement), import vérifié avec confirmation, date du dernier export et rappel après 7 jours
 - Installation : statut plein écran, hors ligne et stockage protégé dans Réglages ; demande de stockage persistant au lancement
