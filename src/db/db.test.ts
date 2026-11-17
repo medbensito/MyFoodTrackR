@@ -4,6 +4,7 @@ import { FoodTrackDB } from './db'
 import { initialFoods } from './seed'
 import { SAMPLE_RECIPES } from './sampleRecipes'
 import { PACK_FOODS, PACK_RECIPES } from './pack'
+import { PACK3_FOODS, PACK3_RECIPES } from './pack3'
 import { LEGACY_V4 } from './legacyRecipes'
 import { DEFAULT_SETTINGS } from '../lib/targets'
 import Dexie from 'dexie'
@@ -11,7 +12,7 @@ import Dexie from 'dexie'
 describe('base locale', () => {
   it('importe les aliments et les réglages au premier lancement', async () => {
     const db = new FoodTrackDB('test-' + Math.random())
-    expect(await db.foods.count()).toBe(33 + PACK_FOODS.length)
+    expect(await db.foods.count()).toBe(33 + PACK_FOODS.length + PACK3_FOODS.length)
     const settings = await db.settings.get('main')
     expect(settings?.weightKg).toBe(70)
     expect(settings?.trainingTime).toBe('morning')
@@ -22,7 +23,7 @@ describe('base locale', () => {
 
   it('crée les recettes d\'exemple sur une base neuve', async () => {
     const db = new FoodTrackDB('test-' + Math.random())
-    expect(await db.recipes.count()).toBe(SAMPLE_RECIPES.length + PACK_RECIPES.length)
+    expect(await db.recipes.count()).toBe(SAMPLE_RECIPES.length + PACK_RECIPES.length + PACK3_RECIPES.length)
     db.close()
   })
 
@@ -34,7 +35,7 @@ describe('base locale', () => {
     v1.close()
 
     const db = new FoodTrackDB(name)
-    expect(await db.recipes.count()).toBe(SAMPLE_RECIPES.length + PACK_RECIPES.length)
+    expect(await db.recipes.count()).toBe(SAMPLE_RECIPES.length + PACK_RECIPES.length + PACK3_RECIPES.length)
     const s = await db.settings.get('main')
     expect(s?.name).toBe(DEFAULT_SETTINGS.name)
     expect(s?.goal).toBe('recomposition')
@@ -50,8 +51,8 @@ describe('base locale', () => {
     v3.close()
     const db = new FoodTrackDB(name)
     expect((await db.recipes.get(PACK_RECIPES[0].id))?.name).toBe('Ma version')
-    expect(await db.recipes.count()).toBe(PACK_RECIPES.length)
-    expect(await db.foods.count()).toBe(PACK_FOODS.length)
+    expect(await db.recipes.count()).toBe(PACK_RECIPES.length + PACK3_RECIPES.length)
+    expect(await db.foods.count()).toBe(PACK_FOODS.length + PACK3_FOODS.length)
     db.close()
   })
 
@@ -107,6 +108,25 @@ describe('fiches de préparation (v8)', () => {
     expect(p?.steps?.length).toBeGreaterThan(0)
     expect(p?.notes).toBe('Ma façon à moi')
     expect((await db.recipes.get('ex-poulet-riz-brocoli'))?.steps).toBeUndefined()
+    db.close()
+  })
+})
+
+describe('pack v3.2 (v9)', () => {
+  it('ajoute les nouvelles recettes avec leur fiche, sans toucher aux existantes', async () => {
+    const name = 'test-v9-' + Math.random()
+    const v8 = new Dexie(name)
+    v8.version(8).stores({ foods: 'id, name, category, verified, barcode', recipes: 'id, name, *slots', plannedMeals: 'id, date, [date+slot]', logEntries: 'id, date', settings: 'id', shoppingChecks: 'id', dayOverrides: 'date', weighIns: 'date' })
+    await v8.table('recipes').add({ ...PACK_RECIPES[0], name: 'Ma version' })
+    await v8.table('foods').add({ ...PACK3_FOODS[0], name: 'Ma tortilla' })
+    await v8.table('settings').add(DEFAULT_SETTINGS)
+    v8.close()
+    const db = new FoodTrackDB(name)
+    expect((await db.recipes.get(PACK_RECIPES[0].id))?.name).toBe('Ma version')
+    expect((await db.foods.get(PACK3_FOODS[0].id))?.name).toBe('Ma tortilla')
+    expect(await db.recipes.count()).toBe(1 + PACK3_RECIPES.length)
+    expect((await db.recipes.get('p3-wrap-poulet'))?.steps?.length).toBeGreaterThan(3)
+    expect(await db.extras.count()).toBe(0)
     db.close()
   })
 })

@@ -6,6 +6,7 @@ import { FoodTrackDB } from '../db/db'
 import { initialFoods } from '../db/seed'
 import { SAMPLE_RECIPES } from '../db/sampleRecipes'
 import { PACK_FOODS, PACK_RECIPES } from '../db/pack'
+import { PACK3_FOODS, PACK3_RECIPES } from '../db/pack3'
 import { DEFAULT_SETTINGS } from './targets'
 
 const sample = () => buildBackup({
@@ -58,9 +59,9 @@ describe('aller-retour en base', () => {
     expect(parsed.ok).toBe(true)
     if (!parsed.ok) return
     await importAll(b, parsed.backup)
-    expect(await b.foods.count()).toBe(33 + PACK_FOODS.length + 1)
+    expect(await b.foods.count()).toBe(33 + PACK_FOODS.length + PACK3_FOODS.length + 1)
     expect((await b.foods.get('perso-x'))?.name).toBe('Harira')
-    expect(await b.recipes.count()).toBe(SAMPLE_RECIPES.length + PACK_RECIPES.length)
+    expect(await b.recipes.count()).toBe(SAMPLE_RECIPES.length + PACK_RECIPES.length + PACK3_RECIPES.length)
     expect((await b.logEntries.get('l1'))?.macros.kcal).toBe(100)
     a.close(); b.close()
   })

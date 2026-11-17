@@ -4,7 +4,14 @@ Design : direction A « Nuit athlétique » (fond noir, citron #C8F560, Barlow C
 
 PWA personnelle de nutrition : planning de la semaine, recettes avec macros, tracker de protéines. Tout est stocké localement sur l'appareil (IndexedDB).
 
-## État : v3.1.0
+## État : v3.2.0
+
+- Calories gérées sur la semaine : écart prévu (resto, sortie, fête, famille) dans « Ce jour-là », dépassements constatés compensés sur les jours suivants (300 kcal max par jour, protéines inchangées), carte « Semaine équilibrée » dans Planning, note dans le Tracker, réglage pour désactiver la compensation
+- « Que manger maintenant ? » dans le Tracker : 3 propositions (recettes ou aliments, portion ajustée) pour le repas en cours ou pour finir la journée, en gardant de quoi couvrir les repas suivants
+- 20 nouvelles recettes guidées : 9 plats rapides, 6 petits-déjeuners / s'hour, 5 collations protéinées, et 17 nouveaux aliments
+- Planning plus varié : tirage parmi les recettes proches de la meilleure, favoris et recettes peu utilisées favorisés (44 recettes sur 47 apparaissent sur 40 semaines simulées, toutes les journées restent dans la cible)
+
+### v3.1.0
 
 - Fiches recettes guidées : temps de préparation et de cuisson, matériel, étapes détaillées (feu, durées, repères de cuisson), astuces, pour les 27 recettes fournies
 - Quantités dans les étapes qui suivent la portion, poids cru à acheter pour les ingrédients comptés cuits, eau de cuisson, œufs à la pièce

@@ -206,6 +206,14 @@ export function SettingsScreen({ settings, onBack }: { settings: Settings; onBac
 
       <div className="card">
         <h2>Cibles quotidiennes</h2>
+        <label className="field">
+          <span>
+            Équilibrer sur la semaine
+            <span className="small muted block">Un dépassement allège les jours suivants (300 kcal max par jour, protéines inchangées). Les écarts prévus sont toujours compensés.</span>
+          </span>
+          <input type="checkbox" className="switch" checked={draft.weekBalance !== false}
+            onChange={(e) => update({ weekBalance: e.target.checked })} />
+        </label>
         <TargetBlock title="Jour de repos" m={draft.targets.rest}
           onChange={(m) => update({ targets: { ...draft.targets, rest: m } })} />
         <TargetBlock title="Jour d'entraînement" m={draft.targets.training}

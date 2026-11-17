@@ -4,6 +4,7 @@ import { db } from '../db/db'
 import { useNav } from '../nav'
 import type { Settings } from '../types'
 import { isoWeek, targetsForDate, toISODate, trainingOn, weekDays } from '../lib/targets'
+import { adjustMacros, weekBudget, type WeekBudget } from '../lib/week'
 import { currentStreak, reviewDay, summarizeWeek, type WeekReview } from '../lib/review'
 import { SLOT_LABEL } from '../lib/nutrition'
 import { ScreenHeader, SquareButton } from '../components/ScreenHeader'
@@ -35,8 +36,9 @@ export function ReviewScreen({ settings }: { settings: Settings }) {
   const planned = useLiveQuery(() => db.plannedMeals.where('date').between(start, end, true, true).toArray(), [start, end])
   const overrides = useLiveQuery(() => db.dayOverrides.where('date').between(start, end, true, true).toArray()
     .then((os) => new Map(os.map((o) => [o.date, o.training]))), [start, end])
+  const extras = useLiveQuery(() => db.extras.where('date').between(start, end, true, true).toArray(), [start, end])
 
-  if (!entries || !planned || !overrides) return <div className="loading">Chargement…</div>
+  if (!entries || !planned || !overrides || !extras) return <div className="loading">Chargement…</div>
 
   const byDate = <T extends { date: string }>(xs: T[]) => {
     const m = new Map<string, T[]>()
@@ -44,9 +46,28 @@ export function ReviewScreen({ settings }: { settings: Settings }) {
     return m
   }
   const eByDate = byDate(entries), pByDate = byDate(planned)
+  // Cibles de la semaine, écarts prévus et compensation compris (une fois par semaine).
+  const todayIso = toISODate(today)
+  const budgets = new Map<string, WeekBudget>()
+  const deltaOn = (iso: string) => {
+    const dates = weekDays(parse(iso)).map(toISODate)
+    let b = budgets.get(dates[0])
+    if (!b) {
+      const eaten = new Map<string, number>()
+      for (const x of dates) { const es = eByDate.get(x); if (es) eaten.set(x, es.reduce((s, e) => s + e.macros.kcal, 0)) }
+      b = weekBudget({
+        dates, eaten, today: todayIso, compensate: settings.weekBalance !== false,
+        base: new Map(dates.map((x) => [x, targetsForDate(parse(x), settings, overrides).kcal])),
+        extras: extras.filter((e) => e.date >= dates[0] && e.date <= dates[6]),
+      })
+      budgets.set(dates[0], b)
+    }
+    return b.delta.get(iso) ?? 0
+  }
   const dayOf = (iso: string) => {
     const d = parse(iso)
-    return reviewDay(iso, trainingOn(d, settings, overrides), targetsForDate(d, settings, overrides), eByDate.get(iso) ?? [], pByDate.get(iso) ?? [])
+    const target = adjustMacros(targetsForDate(d, settings, overrides), deltaOn(iso))
+    return reviewDay(iso, trainingOn(d, settings, overrides), target, eByDate.get(iso) ?? [], pByDate.get(iso) ?? [])
   }
   const reviews: WeekReview[] = weeks.map((w) => summarizeWeek(w.map(dayOf)))
   const week = reviews[3]

@@ -458,3 +458,28 @@ input, select, textarea { font: inherit; }
 .tips li { position: relative; padding-left: 18px; font-size: 15px; line-height: 1.55; color: var(--text-2); }
 .tips li::before { content: ''; position: absolute; left: 2px; top: 0.62em; width: 6px; height: 6px; border-radius: 50%; background: var(--lime); }
 .tips li strong { color: var(--text); font-weight: 700; }
+
+/* ——— calories gérées sur la semaine ——— */
+.week-budget { margin-top: 18px; background: var(--surface); border: 1px solid var(--line-soft); border-left: 3px solid var(--amber); border-radius: 16px; padding: 14px 16px; }
+.week-budget-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.week-budget p { margin: 8px 0 0; font-size: 14px; line-height: 1.5; color: var(--text-2); }
+.week-budget p strong { color: var(--text); }
+.week-budget .btn { margin-top: 12px; }
+.week-note { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; margin-top: 14px; background: var(--surface); border: 1px solid var(--line-soft); border-left: 3px solid var(--amber); border-radius: 14px; padding: 12px 14px; color: var(--text-2); font: inherit; font-size: 14px; line-height: 1.5; }
+.week-note strong { color: var(--text); }
+.week-note > span { flex: 1; }
+.week-note svg { flex-shrink: 0; color: var(--muted); }
+
+/* ——— que manger maintenant ——— */
+.now-btn { margin-top: 14px; display: inline-flex; align-items: center; gap: 8px; background: transparent; border: 1.5px solid var(--lime); color: var(--lime); border-radius: 999px; padding: 9px 14px 9px 16px; font-family: var(--display); font-weight: 700; font-size: 15px; letter-spacing: 0.06em; text-transform: uppercase; }
+.now-target { margin-top: 16px; background: var(--surface); border: 1px solid var(--line-soft); border-radius: 16px; padding: 12px 16px; }
+.now-target p { margin: 4px 0 2px; font-size: 16px; }
+.now-target strong { font-weight: 700; }
+.now-list { margin-top: 14px; display: grid; gap: 10px; }
+.now-opt { display: flex; align-items: center; gap: 10px; background: var(--surface); border: 1px solid var(--line-soft); border-radius: 16px; padding: 12px 12px 12px 16px; }
+.now-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; text-align: left; background: none; border: 0; padding: 0; color: inherit; font: inherit; }
+.now-main:disabled { opacity: 1; }
+.now-main strong { font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 4px; }
+.now-main strong svg { color: var(--muted); flex-shrink: 0; }
+.now-macros { font-size: 13px; color: var(--muted); }
+.now-add { flex-shrink: 0; background: var(--lime); color: var(--bg); border-color: var(--lime); }

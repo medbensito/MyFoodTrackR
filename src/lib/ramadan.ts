@@ -21,8 +21,10 @@ export type SlotNames = {
   label: Record<MealSlot, string>
   short: Record<MealSlot, string>
   the: Record<MealSlot, string>
-  /** Ordre dans la journée. */
+  /** Ordre d'affichage. */
   order: MealSlot[]
+  /** Ordre dans le temps (la collation se prend avant le dîner). */
+  chrono: MealSlot[]
 }
 
 const RAMADAN_NAMES: SlotNames = {
@@ -32,8 +34,9 @@ const RAMADAN_NAMES: SlotNames = {
   short: { breakfast: "S'hour", lunch: 'Ftour', snack: 'Collation', dinner: 'Dîner' },
   the: { breakfast: "Le s'hour", lunch: 'Le ftour', snack: 'La collation', dinner: 'Le dîner' },
   order: ['breakfast', 'lunch', 'snack', 'dinner'],
+  chrono: ['breakfast', 'lunch', 'snack', 'dinner'],
 }
-const DEFAULT_NAMES: SlotNames = { label: SLOT_LABEL, short: SLOT_SHORT, the: SLOT_THE, order: SLOT_ORDER }
+const DEFAULT_NAMES: SlotNames = { label: SLOT_LABEL, short: SLOT_SHORT, the: SLOT_THE, order: SLOT_ORDER, chrono: ['breakfast', 'lunch', 'snack', 'dinner'] }
 
 export function slotNames(iso: string, settings: Pick<Settings, 'ramadan'>): SlotNames {
   return isRamadan(iso, settings) ? RAMADAN_NAMES : DEFAULT_NAMES

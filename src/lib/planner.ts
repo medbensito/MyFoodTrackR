@@ -21,6 +21,9 @@ export const POST_TRAINING_SLOT: Record<TrainingTime, MealSlot> = { morning: 'br
 
 export const WEIGHTS = { proteinDeficit: 3, proteinExcess: 0.3, kcal: 1, carbs: 0.5, fat: 0.5 }
 
+/** Écart de score toléré par rapport à la meilleure recette d'un créneau, pour varier. */
+export const VARIETY_MARGIN = 0.5
+
 /** Tolérances d'une journée réussie. */
 export const TOLERANCE = { kcalPct: 0.05, proteinMinus: 5 }
 
@@ -35,6 +38,8 @@ export type PlannerInput = {
   pinned: PlannedMeal[]
   /** Repas qui suit la séance, jour par jour (mode Ramadan). */
   postSlotFor?: (date: string) => MealSlot | null
+  /** Cible du jour si elle diffère de repos / entraînement (écart prévu, compensation). */
+  targetFor?: (date: string) => Macros
 }
 
 export type PlannerResult = { meals: PlannedMeal[]; warnings: string[] }
@@ -147,7 +152,7 @@ export function generateWeek(input: PlannerInput, seed: number): PlannerResult {
 
   dates.forEach((date, di) => {
     const training = trainingDates.has(date)
-    const target = dayTarget(training, settings)
+    const target = input.targetFor ? input.targetFor(date) : dayTarget(training, settings)
     const slotT = slotTargets(training, settings, input.postSlotFor ? input.postSlotFor(date) : undefined)
     const pinnedToday = input.pinned.filter((p) => p.date === date)
     const pinnedSlots = new Set(pinnedToday.map((p) => p.slot))
@@ -194,12 +199,16 @@ export function generateWeek(input: PlannerInput, seed: number): PlannerResult {
       if (candidates.length === 0) candidates = pool.filter((r) => allowed(r, false))
       if (candidates.length === 0) candidates = pool
 
-      let best: { r: PlannerRecipe; factor: number; total: number } | null = null
-      for (const r of candidates) {
-        const { factor, score: s } = bestFactor(r.perServing, adjusted[slot])
-        const total = s + rng() * 0.2 // variété contrôlée par la graine
-        if (!best || total < best.total) best = { r, factor, total }
-      }
+      // Variété : tirage parmi les recettes proches de la meilleure (la correction de fin
+      // de journée rattrape l'écart par les portions). Les favoris sortent plus souvent,
+      // les recettes peu utilisées cette semaine aussi.
+      const scoredC = candidates.map((r) => ({ r, ...bestFactor(r.perServing, adjusted[slot]) }))
+      const top = Math.min(...scoredC.map((c) => c.score))
+      const near = scoredC.filter((c) => c.score <= top + VARIETY_MARGIN)
+      const weight = (c: (typeof near)[number]) => (c.r.favorite ? 2 : 1) / (1 + (weekUses.get(c.r.id) ?? 0)) / (1 + 4 * (c.score - top))
+      let pick = rng() * near.reduce((sum, c) => sum + weight(c), 0)
+      const chosen = near.find((c) => (pick -= weight(c)) <= 0) ?? near[near.length - 1]
+      const best = chosen ? { r: chosen.r, factor: chosen.factor } : null
       if (!best) continue
       today.push({ id: `pm-${date}-${slot}`, date, slot, recipeId: best.r.id, portionFactor: best.factor, pinned: false })
       usedToday.add(best.r.id)

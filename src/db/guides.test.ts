@@ -2,9 +2,10 @@ import { describe, expect, it } from 'vitest'
 import { GUIDES, withGuide } from './guides'
 import { SAMPLE_RECIPES } from './sampleRecipes'
 import { PACK_RECIPES } from './pack'
+import { PACK3_RECIPES } from './pack3'
 
 describe('fiches de préparation', () => {
-  const seeds = [...SAMPLE_RECIPES, ...PACK_RECIPES]
+  const seeds = [...SAMPLE_RECIPES, ...PACK_RECIPES, ...PACK3_RECIPES]
   it('couvre toutes les recettes fournies', () => {
     expect(Object.keys(GUIDES).sort()).toEqual(seeds.map((r) => r.id).sort())
   })

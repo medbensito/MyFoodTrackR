@@ -2,17 +2,17 @@ import type { FoodTrackDB } from './db'
 import { buildBackup, type Backup } from '../lib/backup'
 
 export async function exportAll(db: FoodTrackDB): Promise<Backup> {
-  const [foods, recipes, plannedMeals, logEntries, settings, dayOverrides, shoppingChecks, weighIns] = await Promise.all([
+  const [foods, recipes, plannedMeals, logEntries, settings, dayOverrides, shoppingChecks, weighIns, extras] = await Promise.all([
     db.foods.toArray(), db.recipes.toArray(), db.plannedMeals.toArray(), db.logEntries.toArray(), db.settings.toArray(),
-    db.dayOverrides.toArray(), db.shoppingChecks.toArray(), db.weighIns.toArray(),
+    db.dayOverrides.toArray(), db.shoppingChecks.toArray(), db.weighIns.toArray(), db.extras.toArray(),
   ])
-  return buildBackup({ foods, recipes, plannedMeals, logEntries, settings, dayOverrides, shoppingChecks, weighIns })
+  return buildBackup({ foods, recipes, plannedMeals, logEntries, settings, dayOverrides, shoppingChecks, weighIns, extras })
 }
 
 /** Remplace toutes les données par celles de la sauvegarde, en une seule transaction. */
 export async function importAll(db: FoodTrackDB, backup: Backup): Promise<void> {
   const d = backup.data
-  const tables = [db.foods, db.recipes, db.plannedMeals, db.logEntries, db.settings, db.dayOverrides, db.shoppingChecks, db.weighIns]
+  const tables = [db.foods, db.recipes, db.plannedMeals, db.logEntries, db.settings, db.dayOverrides, db.shoppingChecks, db.weighIns, db.extras]
   await db.transaction('rw', tables, async () => {
     await Promise.all(tables.map((t) => t.clear()))
     await db.foods.bulkPut(d.foods)
@@ -23,5 +23,6 @@ export async function importAll(db: FoodTrackDB, backup: Backup): Promise<void> 
     if (d.dayOverrides) await db.dayOverrides.bulkPut(d.dayOverrides)
     if (d.shoppingChecks) await db.shoppingChecks.bulkPut(d.shoppingChecks)
     if (d.weighIns) await db.weighIns.bulkPut(d.weighIns)
+    if (d.extras) await db.extras.bulkPut(d.extras)
   })
 }

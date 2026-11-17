@@ -90,7 +90,12 @@ export type Settings = {
   /** Date du dernier ajustement des cibles accepté (ms). */
   lastAdjustAt?: number
   ramadan?: RamadanSettings
+  /** Compenser les dépassements sur le reste de la semaine (par défaut : oui). */
+  weekBalance?: boolean
 }
+
+/** Écart prévu un jour donné (sortie, fête…) : compensé sur les autres jours de la semaine. */
+export type DayExtra = { date: string; kcal: number; label: string; createdAt: number }
 
 export type RamadanSession = 'before-ftour' | 'after-ftour' | 'none'
 export type RamadanSettings = { enabled: boolean; start: string; end: string; session: RamadanSession }

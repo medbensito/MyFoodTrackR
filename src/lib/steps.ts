@@ -6,6 +6,7 @@ const PIECES: Record<string, { g: number; one: string; many: string }> = {
   'oeuf-entier': { g: 50, one: 'œuf', many: 'œufs' },
   'blanc-oeuf': { g: 30, one: 'blanc', many: 'blancs' },
   'dattes-medjool': { g: 24, one: 'datte', many: 'dattes' },
+  'galettes-riz': { g: 9, one: 'galette', many: 'galettes' },
 }
 
 const TOKEN = /\{([a-z0-9-]+)(?:\*([\d.]+))?(?: (ml|g))?\}/g

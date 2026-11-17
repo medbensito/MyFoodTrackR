@@ -413,6 +413,280 @@ export const GUIDES: Record<string, Guide> = {
     ],
     tips: ["Le plus rapide après la séance pour avancer sur tes protéines de la journée."],
   },
+
+  // ——— Pack v3.2 : plats rapides ———
+  'p3-wrap-poulet': {
+    prepMin: 10, cookMin: 8,
+    tools: ['poêle antiadhésive'],
+    steps: [
+      "La sauce : mélange le yaourt grec ({yaourt-grec-0}) avec une pincée de sel, du poivre, ½ gousse d'ail râpée, un filet de citron, et un peu de menthe ou de ciboulette si tu en as.",
+      "Coupe le blanc de poulet ({poulet-blanc-cuit*1.35} cru) en lanières fines. Assaisonne de sel, de poivre, de paprika et d'une pincée de cumin.",
+      "Fais-le dorer 5 à 6 min dans la poêle à feu moyen-vif, sans matière grasse ou avec une goutte d'huile essuyée au papier. Il est cuit quand l'intérieur est blanc.",
+      "Pendant ce temps, émince la salade ({laitue}), coupe la tomate ({tomate}) et le concombre ({concombre}) en bâtonnets, égoutte le maïs ({mais-doux}) et émiette la feta ({feta}).",
+      "Réchauffe les tortillas ({tortilla-ble}) 20 s par face dans la poêle chaude : elles deviennent souples et ne cassent pas en les roulant.",
+      "Étale la sauce au centre, garnis de poulet, de crudités, de maïs et de feta sans trop remplir. Replie le bas, puis roule bien serré. Coupe en deux en biais.",
+    ],
+    tips: [
+      "Pour l'emporter, enveloppe-le dans du papier aluminium : il se tient jusqu'au repas.",
+      "Sans poêle : 15 s au micro-ondes suffisent pour assouplir les tortillas.",
+    ],
+  },
+
+  'p3-bowl-thon-avocat': {
+    prepMin: 10, cookMin: 17,
+    tools: ['casserole avec couvercle'],
+    steps: [
+      "Lance le riz : rince {riz-blanc-cru} de riz, porte {riz-blanc-cru*1.6 ml} d'eau salée à ébullition, verse le riz, couvre et cuis 12 min à feu très doux. Laisse reposer 5 min hors du feu sans ouvrir, puis laisse tiédir.",
+      "Pendant ce temps, coupe le concombre ({concombre}) en dés. Égoutte le maïs ({mais-doux}) et le thon ({thon-naturel-egoutte}), puis émiette le thon à la fourchette.",
+      "Coupe l'avocat en deux, retire le noyau et prends-en {avocat}. Tranche-le et arrose-le d'un filet de citron pour qu'il ne noircisse pas.",
+      "Mets le riz dans un bol, puis dispose par-dessus le thon, l'avocat, le maïs et le concombre, chacun dans son coin.",
+      "Arrose de sauce soja ({sauce-soja}) mélangée à un peu de citron. Graines de sésame ou piment si tu aimes.",
+    ],
+    tips: [
+      "Le reste d'avocat se garde un jour au frigo avec son noyau, la chair filmée au contact.",
+      "Riz chaud ou froid : les deux marchent.",
+    ],
+  },
+
+  'p3-saute-boeuf-riz': {
+    prepMin: 10, cookMin: 17,
+    tools: ['casserole avec couvercle', 'poêle ou wok'],
+    steps: [
+      "Lance le riz : rince {riz-blanc-cru} de riz, porte {riz-blanc-cru*1.6 ml} d'eau salée à ébullition, verse le riz, couvre et cuis 12 min à feu très doux, puis 5 min de repos hors du feu sans ouvrir.",
+      "Coupe le bœuf ({rumsteck-cuit*1.3} de rumsteck cru) en fines lanières, perpendiculairement aux fibres : il restera tendre. Mélange-le avec la moitié de la sauce soja ({sauce-soja} en tout), du poivre et 1 gousse d'ail hachée.",
+      "Émince l'oignon ({oignon}), coupe le poivron ({poivron}) en lanières et le brocoli ({brocoli-cuit}) en petits bouquets.",
+      "Chauffe la moitié de l'huile ({huile-olive} en tout) à feu vif. Saisis le bœuf 1 à 2 min en remuant : il doit dorer dehors et rester rosé dedans. Réserve-le dans une assiette.",
+      "Dans la même poêle, ajoute le reste de l'huile et fais sauter l'oignon, le poivron et le brocoli 4 à 5 min à feu vif. Ils doivent colorer mais rester croquants : ajoute 2 c. à soupe d'eau si ça attache.",
+      "Remets le bœuf, ajoute le reste de la sauce soja, et un peu de gingembre râpé si tu en as. Mélange 30 s et sers sur le riz.",
+    ],
+    tips: [
+      "Feu vif et poêle pas trop pleine : sinon les légumes bouillent au lieu de sauter.",
+      "Avec du poulet ou de la dinde à la place du bœuf : 5 min de cuisson, bien cuit à cœur.",
+    ],
+  },
+
+  'p3-pates-poulet-epinards': {
+    prepMin: 10, cookMin: 15,
+    tools: ['grande casserole', 'poêle', 'passoire'],
+    steps: [
+      "Porte à ébullition une grande casserole d'eau salée (1 L pour 100 g de pâtes).",
+      "Coupe le blanc de poulet ({poulet-blanc-cuit*1.35} cru) en petits dés. Émince les champignons ({champignons-cuits*1.4} crus : ils réduisent à la cuisson) et hache 1 gousse d'ail.",
+      "Verse les pâtes ({pates-crues}) dans l'eau bouillante et lance le minuteur selon le paquet.",
+      "Chauffe l'huile ({huile-olive}) dans la poêle à feu moyen-vif. Fais dorer le poulet 4 min, ajoute les champignons et l'ail, et poursuis 4 à 5 min, jusqu'à ce que l'eau des champignons se soit évaporée.",
+      "Ajoute les épinards : {epinards-cuits} d'épinards surgelés, ou {epinards-cuits*2.5} de frais. Laisse-les tomber 1 à 2 min en remuant.",
+      "Hors du feu, ajoute le fromage blanc ({fromage-blanc-0}) et l'emmental râpé ({emmental}), du sel, du poivre et une pincée de muscade : c'est une sauce crémeuse sans crème.",
+      "Égoutte les pâtes en gardant un fond de verre d'eau de cuisson. Mélange-les à la sauce avec un peu de cette eau pour qu'elle nappe bien.",
+    ],
+    tips: ["Le fromage blanc s'ajoute hors du feu : s'il bout, il fait des grains."],
+  },
+
+  'p3-chili-express': {
+    prepMin: 10, cookMin: 25,
+    tools: ['casserole avec couvercle', 'sauteuse'],
+    steps: [
+      "Lance le riz : rince {riz-blanc-cru} de riz, porte {riz-blanc-cru*1.6 ml} d'eau salée à ébullition, verse le riz, couvre et cuis 12 min à feu très doux, puis 5 min de repos.",
+      "Émince l'oignon ({oignon}), hache 1 gousse d'ail, et coupe les tomates ({tomate}) en dés, ou prends des tomates concassées en boîte, même poids.",
+      "Chauffe l'huile ({huile-olive}) dans la sauteuse à feu moyen. Fais revenir l'oignon et l'ail 3 min, puis monte à feu vif, ajoute le bœuf haché ({boeuf-hache-5}) et émiette-le 4 min, jusqu'à ce qu'il n'y ait plus de rose.",
+      "Ajoute 1 c. à café de cumin, 1 c. à café de paprika, ½ c. à café d'origan, une pincée de piment (plus si tu aimes), du sel, puis les tomates. Laisse mijoter 10 min à feu doux.",
+      "Rince et égoutte les haricots rouges ({haricots-rouges-cuits}) et le maïs ({mais-doux}). Ajoute-les et poursuis 5 min. Le chili doit être épais : s'il est trop liquide, laisse réduire à découvert.",
+      "Sers sur le riz, avec un peu de coriandre et un quartier de citron.",
+    ],
+    tips: ["Une cuillère de yaourt grec dessus calme le piquant : ajoute-la dans « Modifier » pour la compter."],
+  },
+
+  'p3-steak-pdt-haricots': {
+    prepMin: 10, cookMin: 20,
+    tools: ['casserole', 'deux poêles'],
+    steps: [
+      "Épluche {pommes-terre-cuites*1.05} de pommes de terre et coupe-les en cubes de 2 cm. Cuis-les 8 min dans l'eau bouillante salée : elles doivent être presque tendres. Égoutte et laisse sécher 2 min.",
+      "En même temps, cuis les haricots verts ({haricots-verts-cuits}), frais équeutés ou surgelés, 6 à 8 min dans l'eau bouillante salée. Ils doivent rester un peu croquants. Égoutte.",
+      "Chauffe les deux tiers de l'huile ({huile-olive} en tout) dans une poêle à feu moyen-vif. Fais sauter les pommes de terre 8 à 10 min en les retournant, jusqu'à ce qu'elles soient dorées. Sale, poivre, persil ou herbes de Provence.",
+      "Sors le steak du frigo 10 min avant : il te faut {rumsteck-cuit*1.25} de rumsteck cru. Sèche-le et sale-le juste avant de le cuire.",
+      "Chauffe le reste de l'huile dans l'autre poêle à feu vif, jusqu'à ce qu'elle fume légèrement. Saisis le steak sans le bouger : 2 min par face pour saignant, 3 min pour à point (pour 2 cm d'épaisseur). Laisse-le reposer 2 min avant de couper : le jus reste dedans.",
+      "Réchauffe les haricots 1 min dans la poêle du steak pour qu'ils prennent le goût, et sers le tout.",
+    ],
+    tips: ["Pour la cuisson sans couper : appuie au centre. Mou, c'est saignant ; souple, à point ; ferme, bien cuit."],
+  },
+
+  'p3-pita-kefta': {
+    prepMin: 15, cookMin: 10,
+    tools: ['poêle'],
+    steps: [
+      "Mélange le bœuf haché ({boeuf-hache-5}) avec ½ c. à café de cumin, ½ c. à café de paprika, du sel, du poivre, et 1 c. à soupe de persil et de coriandre hachés. Malaxe 1 min.",
+      "Forme 3 ou 4 petits boudins allongés, ou des boulettes aplaties : ils cuisent plus vite et rentrent mieux dans la pita.",
+      "La sauce : mélange le yaourt grec ({yaourt-grec-0}) avec un peu de cumin, du sel, un filet de citron, et de la menthe ou du persil.",
+      "Coupe la tomate ({tomate}) en dés, l'oignon ({oignon}) en fines lamelles, et émince la salade ({laitue}).",
+      "Chauffe l'huile ({huile-olive}) dans la poêle à feu moyen-vif et cuis la kefta 6 à 8 min en la retournant, jusqu'à ce qu'elle soit bien dorée et cuite à cœur.",
+      "Réchauffe les pitas ({pita}) 30 s par face dans la poêle, ouvre-les en poche, et garnis de salade, de kefta, de tomate, d'oignon et de sauce.",
+    ],
+    tips: ["Au gril ou au barbecue, la kefta est encore meilleure : même temps de cuisson."],
+  },
+
+  'p3-riz-saute-dinde': {
+    prepMin: 10, cookMin: 20,
+    tools: ['casserole avec couvercle', 'poêle ou wok'],
+    steps: [
+      "Cuis le riz : rince {riz-blanc-cru} de riz, porte {riz-blanc-cru*1.6 ml} d'eau salée à ébullition, verse le riz, couvre et laisse 12 min à feu très doux. Étale-le ensuite dans une assiette pour qu'il refroidisse et sèche un peu.",
+      "Coupe l'escalope de dinde ({dinde-escalope-cuite*1.3} crue) en petits dés et le poivron ({poivron}) en petits morceaux. Égoutte le maïs ({mais-doux}).",
+      "Chauffe la moitié de l'huile ({huile-olive} en tout) à feu vif. Saisis la dinde 4 à 5 min, jusqu'à ce qu'elle soit blanche à cœur, ajoute le poivron 2 min, puis réserve le tout.",
+      "Bats {oeuf-entier} avec une pincée de sel. Verse-les dans la poêle chaude et remue 1 min à la spatule pour faire des œufs brouillés en gros morceaux. Réserve avec la dinde.",
+      "Ajoute le reste de l'huile, puis le riz. Fais-le sauter 3 min à feu vif en l'étalant bien, pour qu'il dore un peu.",
+      "Remets la dinde, le poivron, les œufs et le maïs, verse la sauce soja ({sauce-soja}) et mélange 1 min. Oignon vert ou coriandre si tu en as.",
+    ],
+    tips: ["Un reste de riz de la veille est idéal : il colle moins et dore mieux."],
+  },
+
+  'p3-omelette-epinards-feta': {
+    prepMin: 5, cookMin: 10,
+    tools: ['poêle antiadhésive avec couvercle', 'grille-pain'],
+    steps: [
+      "Épinards surgelés ({epinards-cuits}) : fais-les décongeler 3 min à la poêle. Frais ({epinards-cuits*2.5}) : fais-les tomber 2 min. Presse-les bien dans une passoire, sinon l'omelette sera détrempée.",
+      "Bats {oeuf-entier} avec du poivre et un peu de sel : la feta est déjà salée.",
+      "Chauffe l'huile ({huile-olive}) dans la poêle à feu moyen. Ajoute les épinards et 1 gousse d'ail hachée 1 min, puis verse les œufs.",
+      "Émiette la feta ({feta}) dessus. Baisse le feu, couvre et laisse cuire 4 à 5 min : le dessus doit être pris, à peine tremblotant.",
+      "Pendant ce temps, fais griller le pain complet ({pain-complet}).",
+      "Plie l'omelette en deux et sers avec le pain.",
+    ],
+    tips: ["Pour le s'hour, prépare les épinards la veille : il ne reste que 5 min de cuisson."],
+  },
+
+  // ——— Pack v3.2 : petits-déjeuners / s'hour ———
+  'p3-tartines-oeufs-avocat': {
+    prepMin: 5, cookMin: 5,
+    tools: ['poêle antiadhésive', 'grille-pain'],
+    steps: [
+      "Fais griller le pain complet ({pain-complet}).",
+      "Écrase l'avocat ({avocat}) à la fourchette avec un filet de citron, du sel et du poivre.",
+      "Bats {oeuf-entier} avec {blanc-oeuf} d'œuf, une pincée de sel et de poivre.",
+      "Verse dans la poêle à feu doux, sans matière grasse. Remue doucement et sans arrêt à la spatule 2 à 3 min, et retire du feu quand les œufs sont encore crémeux.",
+      "Tartine le pain d'avocat, ajoute les œufs brouillés et la tomate ({tomate}) en rondelles. Paprika ou cumin dessus.",
+    ],
+    tips: ["Le reste d'avocat se garde un jour au frigo avec son noyau, filmé au contact."],
+  },
+
+  'p3-overnight-oats': {
+    prepMin: 5, cookMin: 0,
+    tools: ['bocal ou bol avec couvercle'],
+    steps: [
+      "La veille au soir, mets dans un bocal les flocons d'avoine ({flocons-avoine-crus}), le lait ({lait-demi-ecreme*1 ml}) et le yaourt grec ({yaourt-grec-0}), avec une pincée de sel et de cannelle.",
+      "Mélange bien, ferme et laisse au frigo toute la nuit, au moins 4 h : les flocons absorbent le liquide et deviennent fondants.",
+      "Le matin, ajoute les fruits rouges ({fruits-rouges}) encore surgelés : ils décongèlent en quelques minutes et rafraîchissent le tout.",
+      "Verse le miel ({miel}) en filet et mélange. Trop épais : un peu de lait.",
+    ],
+    tips: [
+      "Pendant le Ramadan, prépare-le après le ftour : il est prêt pour le s'hour.",
+      "Une banane à la place des fruits rouges marche aussi : ajoute-la dans « Modifier » pour la compter.",
+    ],
+  },
+
+  'p3-msemen-oeufs-lben': {
+    prepMin: 3, cookMin: 8,
+    tools: ['poêle avec couvercle'],
+    steps: [
+      "Réchauffe le msemen ({msemen}) 1 à 2 min par face dans une poêle sèche à feu moyen : il redevient croustillant dehors et moelleux dedans. Réserve-le dans un torchon.",
+      "Dans la même poêle, casse {oeuf-entier}. Sale, saupoudre de cumin, couvre et laisse cuire 3 min à feu doux : le blanc doit être pris et le jaune encore coulant (1 min de plus si tu le veux cuit).",
+      "Verse le lben ({lben*1 ml}) bien frais dans un verre.",
+      "Sers les œufs à côté du msemen, à tremper ou à rouler dedans.",
+    ],
+    tips: ["Le msemen contient déjà de la matière grasse : pas besoin d'huile pour les œufs."],
+  },
+
+  'p3-bol-fromage-blanc-cacahuete': {
+    prepMin: 5, cookMin: 0,
+    tools: [],
+    steps: [
+      "Verse le fromage blanc ({fromage-blanc-0}) dans un bol et mélange-y les flocons d'avoine ({flocons-avoine-crus}). Laisse reposer 3 min pour qu'ils ramollissent.",
+      "Coupe la banane ({banane}) en rondelles et dispose-les dessus.",
+      "Fais tiédir le beurre de cacahuète ({beurre-cacahuete}) 10 s au micro-ondes pour qu'il coule, et verse-le en filet.",
+      "Cannelle à volonté.",
+    ],
+    tips: ["Sans balance : une cuillère à café de beurre de cacahuète pèse environ 5 g."],
+  },
+
+  'p3-toast-dinde-orange': {
+    prepMin: 5, cookMin: 3,
+    tools: ['grille-pain'],
+    steps: [
+      "Fais griller le pain complet ({pain-complet}).",
+      "Étale le jben ({jben}) sur les tartines encore chaudes, avec du poivre et un peu d'origan ou de zaatar.",
+      "Ajoute les tranches de dinde ({dinde-tranches}) et la tomate ({tomate}) en rondelles.",
+      "Épluche l'orange ({orange}) et coupe-la en quartiers, à manger à côté.",
+    ],
+    tips: ["Le jben s'étale mieux sorti du frigo 5 min avant."],
+  },
+
+  'p3-smoothie-fruits-rouges': {
+    prepMin: 3, cookMin: 0,
+    tools: ['blender ou mixeur'],
+    steps: [
+      "Verse le lait ({lait-demi-ecreme*1 ml}) dans le blender en premier.",
+      "Ajoute la banane ({banane}) en morceaux, les fruits rouges ({fruits-rouges}) encore surgelés, les flocons d'avoine ({flocons-avoine-crus}) et la whey ({whey}).",
+      "Mixe 45 s à 1 min, jusqu'à ce que ce soit bien lisse. Les fruits surgelés le rendent frais et épais, sans glaçons.",
+      "Bois-le tout de suite, ou garde-le 1 h au frigo dans une bouteille fermée.",
+    ],
+    tips: ["Trop épais : un peu de lait ou d'eau. Pas assez sucré : une banane bien mûre."],
+  },
+
+  // ——— Pack v3.2 : collations protéinées ———
+  'p3-galettes-thon': {
+    prepMin: 5, cookMin: 0,
+    tools: [],
+    steps: [
+      "Égoutte le thon ({thon-naturel-egoutte}) et émiette-le dans un bol avec le fromage blanc ({fromage-blanc-0}), un filet de citron, du poivre et un peu de ciboulette ou de persil.",
+      "Coupe le concombre ({concombre}) en fines rondelles.",
+      "Au dernier moment, étale le mélange sur {galettes-riz} de riz soufflé : préparées à l'avance, elles ramollissent.",
+      "Pose les rondelles de concombre dessus.",
+    ],
+    tips: ["À emporter : la garniture dans une petite boîte, et tu montes les galettes au moment de manger."],
+  },
+
+  'p3-yaourt-fruits-rouges': {
+    prepMin: 3, cookMin: 0,
+    tools: [],
+    steps: [
+      "Fruits rouges surgelés ({fruits-rouges}) : laisse-les 10 min à température ambiante, ou 30 s au micro-ondes. Ils rendent un jus qui parfume le yaourt.",
+      "Verse le yaourt grec ({yaourt-grec-0}) dans un bol et ajoute les fruits avec leur jus.",
+      "Parsème de flocons d'avoine ({flocons-avoine-crus}) pour le croquant et verse le miel ({miel}) en filet.",
+    ],
+  },
+
+  'p3-roules-dinde-pomme': {
+    prepMin: 5, cookMin: 0,
+    tools: [],
+    steps: [
+      "Assaisonne le fromage blanc ({fromage-blanc-0}) avec du sel, du poivre et des herbes : ciboulette, persil ou zaatar.",
+      "Coupe le concombre ({concombre}) en bâtonnets de la longueur des tranches.",
+      "Étale un peu de fromage blanc sur chaque tranche de dinde ({dinde-tranches}), pose un bâtonnet de concombre au bord et roule serré.",
+      "Accompagne d'une pomme ({pomme}) coupée en quartiers.",
+    ],
+  },
+
+  'p3-mug-cake': {
+    prepMin: 3, cookMin: 2,
+    tools: ['grand mug', 'micro-ondes'],
+    steps: [
+      "Dans un grand mug, mélange à la fourchette la whey ({whey}), les flocons d'avoine ({flocons-avoine-crus}), et une pincée de levure chimique si tu en as.",
+      "Ajoute {oeuf-entier}, le lait ({lait-demi-ecreme*1 ml}) et le miel ({miel}). Mélange bien, jusqu'à ce qu'il ne reste plus de grumeaux de poudre.",
+      "Cuis 60 à 90 s au micro-ondes à pleine puissance. Arrête dès que le dessus est pris mais encore un peu humide : trop cuit, il devient caoutchouteux.",
+      "Laisse tiédir 1 min et mange-le à la cuillère, dans le mug.",
+    ],
+    tips: [
+      "Avec une whey chocolat, on dirait un vrai gâteau.",
+      "Prends un grand mug : la pâte gonfle de moitié.",
+    ],
+  },
+
+  'p3-fromage-blanc-herbes': {
+    prepMin: 5, cookMin: 2,
+    tools: [],
+    steps: [
+      "Mélange le fromage blanc ({fromage-blanc-0}) avec du sel, du poivre, ½ gousse d'ail râpée, un filet de citron et beaucoup d'herbes hachées : ciboulette, persil, menthe ou coriandre.",
+      "Coupe le concombre ({concombre}) et la carotte ({carotte}) épluchée en bâtonnets.",
+      "Coupe le pain pita ({pita}) en triangles et fais-les griller 2 min à la poêle ou au grille-pain.",
+      "Trempe les bâtonnets et la pita dans le fromage blanc.",
+    ],
+    tips: ["Une pincée de cumin et de paprika dans le fromage blanc, et c'est un dip à la marocaine."],
+  },
 }
 
 const tokenIds = (steps: string[]) => [...steps.join(' ').matchAll(/\{([a-z0-9-]+)/g)].map((m) => m[1])

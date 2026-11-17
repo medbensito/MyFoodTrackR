@@ -1,18 +1,21 @@
 import { useMemo, useState, type ReactNode } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
-import type { Macros, Settings } from '../types'
+import type { Macros, MealSlot, Settings } from '../types'
 import { db } from '../db/db'
 import { useFoods } from '../db/hooks'
 import { usePlannerRecipes } from '../db/usePlannerRecipes'
-import { targetsForDate, toISODate, trainingOn } from '../lib/targets'
+import { toISODate, trainingOn } from '../lib/targets'
+import { useWeekTargets } from '../db/useWeek'
+import { deltaLabel } from '../lib/week'
 import { useOverrides } from '../db/useOverrides'
 import { DayTypeSheet } from '../components/DayTypeSheet'
 import { fmtFactor, roundMacros, scaleMacros } from '../lib/nutrition'
 import { postTrainingSlot, ramadanDay, slotAt, slotNames } from '../lib/ramadan'
-import { dayTotal } from '../lib/planner'
+import { dayTotal, slotTargets } from '../lib/planner'
 import { entryFromPlanned, totalOf } from '../lib/journal'
 import { ScreenHeader, SquareButton } from '../components/ScreenHeader'
 import { AddEntrySheet } from '../components/AddEntrySheet'
+import { NowSheet } from '../components/NowSheet'
 import { BackIcon, CheckIcon, ChevronIcon, PlusIcon, TrophyIcon } from '../components/icons'
 import { useNav } from '../nav'
 
@@ -64,6 +67,7 @@ export function TrackerScreen({ settings }: { settings: Settings }) {
   const [offset, setOffset] = useState(0)
   const [adding, setAdding] = useState(false)
   const [dayType, setDayType] = useState(false)
+  const [nowOpen, setNowOpen] = useState(false)
   const day = useMemo(() => { const d = new Date(); d.setDate(d.getDate() + offset); return d }, [offset])
   const iso = toISODate(day)
 
@@ -72,13 +76,16 @@ export function TrackerScreen({ settings }: { settings: Settings }) {
   const planned = useLiveQuery(() => db.plannedMeals.where('date').equals(iso).toArray(), [iso])
   const entries = useLiveQuery(() => db.logEntries.where('date').equals(iso).toArray(), [iso])
   const overrides = useOverrides([iso])
+  const week = useWeekTargets(day, settings)
 
-  if (!planner || !foods || !planned || !entries || !overrides) return <div className="loading">Chargement…</div>
+  if (!planner || !foods || !planned || !entries || !overrides || !week) return <div className="loading">Chargement…</div>
 
   const names = slotNames(iso, settings)
   const postSlot = postTrainingSlot(iso, settings)
   const rDay = ramadanDay(iso, settings)
-  const t = targetsForDate(day, settings, overrides)
+  const t = week.targetFor(iso)
+  const delta = week.budget.delta.get(iso) ?? 0
+  const dayExtra = week.extras.get(iso)
   const training = trainingOn(day, settings, overrides)
   const consumed = roundMacros(totalOf(entries))
   const plannedTotal = roundMacros(dayTotal(planned, planner.byId))
@@ -107,6 +114,34 @@ export function TrackerScreen({ settings }: { settings: Settings }) {
     hint = <>Encore <strong>{leftP} g</strong>. {names.the[next.slot]} prévu {Math.abs(nextP - leftP) <= 3 ? 'les apporte pile.' : `en apporte ${nextP} g.`}</>
   } else hint = <>Encore <strong>{leftP} g</strong> pour atteindre ta cible.</>
 
+  // Calories gérées sur la semaine : pourquoi la cible bouge, et ce qu'un dépassement change.
+  const over = consumed.kcal - t.kcal
+  const isPastOrToday = iso <= toISODate(new Date())
+  let weekNote: ReactNode = null
+  if (isPastOrToday && over > t.kcal * 0.05) {
+    const cut = week.cutIfDayEndsAt(iso, consumed.kcal)
+    weekNote = iso === week.dates[6]
+      ? <>Tu dépasses de <strong>{over} kcal</strong>. C'est le dernier jour de la semaine : la suivante repart de zéro.</>
+      : settings.weekBalance === false
+        ? <>Tu dépasses de <strong>{over} kcal</strong>. La compensation sur la semaine est désactivée dans les réglages.</>
+        : <>Tu dépasses de <strong>{over} kcal</strong> : si la journée s'arrête là, les jours suivants de la semaine passent à <strong>−{cut} kcal</strong>, protéines inchangées.</>
+  } else if (dayExtra) {
+    weekNote = <>{dayExtra.label} prévu : <strong>{deltaLabel(dayExtra.kcal)}</strong> déjà compris dans ta cible. Les autres jours de la semaine compensent.</>
+  } else if (delta < 0) {
+    weekNote = <>Cible allégée de <strong>{-delta} kcal</strong> pour équilibrer la semaine. Protéines inchangées.</>
+  }
+
+  // « Que manger maintenant ? » : créneau en cours, repas suivants, part habituelle des créneaux.
+  const taken = new Set(entries.map((e) => e.slot).filter((x): x is MealSlot => !!x))
+  const startIdx = names.chrono.indexOf(slotAt(new Date(), iso, settings))
+  const nowSlot = names.chrono.slice(startIdx).find((s) => !taken.has(s)) ?? names.chrono[startIdx]
+  const plannedLater = new Map(planned.filter((m) => !eatenIds.has(m.id) && planner.byId.has(m.recipeId))
+    .map((m) => [m.slot, scaleMacros(planner.byId.get(m.recipeId)!.perServing, m.portionFactor)] as const))
+  const baseKcal = week.baseFor(iso).kcal
+  const shares = slotTargets(training, settings, postSlot)
+  const k = baseKcal > 0 ? t.kcal / baseKcal : 1
+  const slotShare = Object.fromEntries(Object.entries(shares).map(([s, m]) => [s, { ...m, kcal: m.kcal * k, carbs: m.carbs * k, fat: m.fat * k }])) as Record<MealSlot, Macros>
+
   const kind = `${rDay ? `Ramadan j${rDay} · ` : ''}${training ? 'Entraînement' : 'Repos'}`
   const subtitle = offset === 0 ? `${clean(SUB_FMT.format(day))} · ${kind}` : kind
 
@@ -134,6 +169,9 @@ export function TrackerScreen({ settings }: { settings: Settings }) {
           </div>
           <Segments value={consumed.protein} target={t.protein} />
           <p>{hint}</p>
+          {offset === 0 && (
+            <button className="now-btn" onClick={() => setNowOpen(true)}>Que manger maintenant ?<ChevronIcon size={16} /></button>
+          )}
         </div>
       </ScreenHeader>
 
@@ -150,6 +188,12 @@ export function TrackerScreen({ settings }: { settings: Settings }) {
           <Stat label="Glucides" value={consumed.carbs} target={t.carbs} color="var(--cyan)" />
           <Stat label="Lipides" value={consumed.fat} target={t.fat} color="var(--amber)" />
         </div>
+        {weekNote && (
+          <button className="week-note" onClick={() => setDayType(true)}>
+            <span>{weekNote}</span>
+            <ChevronIcon size={16} />
+          </button>
+        )}
 
         <div className="section-label">
           <span>Repas du jour</span>
@@ -239,6 +283,24 @@ export function TrackerScreen({ settings }: { settings: Settings }) {
 
       {dayType && <DayTypeSheet date={iso} training={training} settings={settings} onClose={() => setDayType(false)} />}
 
+      {nowOpen && (
+        <NowSheet
+          date={iso}
+          names={names}
+          defaultSlot={nowSlot}
+          day={t}
+          consumed={consumed}
+          taken={taken}
+          plannedLater={plannedLater}
+          slotShare={slotShare}
+          recipes={planner.list}
+          foods={foods}
+          eatenRecipeIds={new Set(entries.map((e) => e.recipeId).filter((x): x is string => !!x))}
+          onAdd={async (e) => { await db.logEntries.add(e); setNowOpen(false) }}
+          onOpenRecipe={(id) => { setNowOpen(false); nav.push({ type: 'recipe', id }) }}
+          onClose={() => setNowOpen(false)}
+        />
+      )}
       {adding && (
         <AddEntrySheet
           date={iso}

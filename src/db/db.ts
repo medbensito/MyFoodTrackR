@@ -1,9 +1,10 @@
 import Dexie, { type EntityTable } from 'dexie'
-import type { DayOverride, Food, LogEntry, PlannedMeal, Recipe, Settings, ShoppingCheck, WeighIn } from '../types'
+import type { DayExtra, DayOverride, Food, LogEntry, PlannedMeal, Recipe, Settings, ShoppingCheck, WeighIn } from '../types'
 import { DEFAULT_SETTINGS } from '../lib/targets'
 import { initialFoods } from './seed'
 import { SAMPLE_RECIPES } from './sampleRecipes'
 import { PACK_FOODS, PACK_RECIPES } from './pack'
+import { PACK3_FOODS, PACK3_RECIPES } from './pack3'
 import { GUIDES, withGuide } from './guides'
 import { LEGACY_V4 } from './legacyRecipes'
 
@@ -16,6 +17,7 @@ export class FoodTrackDB extends Dexie {
   shoppingChecks!: EntityTable<ShoppingCheck, 'id'>
   dayOverrides!: EntityTable<DayOverride, 'date'>
   weighIns!: EntityTable<WeighIn, 'date'>
+  extras!: EntityTable<DayExtra, 'date'>
 
   constructor(name = 'myfoodtrackr') {
     super(name)
@@ -94,10 +96,21 @@ export class FoodTrackDB extends Dexie {
         }
       })
 
+    // v9 : écarts prévus, compensés sur la semaine ; pack de 20 recettes rapides, petits-déj et collations.
+    this.version(9)
+      .stores({ extras: 'date' })
+      .upgrade(async (tx) => {
+        const foods = tx.table('foods'), recipes = tx.table('recipes')
+        const haveFoods = new Set(await foods.toCollection().primaryKeys())
+        await foods.bulkAdd(PACK3_FOODS.filter((f) => !haveFoods.has(f.id)))
+        const haveRecipes = new Set(await recipes.toCollection().primaryKeys())
+        await recipes.bulkAdd(PACK3_RECIPES.filter((r) => !haveRecipes.has(r.id)).map((r) => withGuide(r)))
+      })
+
     // Exécuté une seule fois, à la création de la base sur l'appareil.
     this.on('populate', async (tx) => {
-      await tx.table('foods').bulkAdd([...initialFoods(), ...PACK_FOODS])
-      await tx.table('recipes').bulkAdd([...SAMPLE_RECIPES, ...PACK_RECIPES].map((r) => withGuide(r)))
+      await tx.table('foods').bulkAdd([...initialFoods(), ...PACK_FOODS, ...PACK3_FOODS])
+      await tx.table('recipes').bulkAdd([...SAMPLE_RECIPES, ...PACK_RECIPES, ...PACK3_RECIPES].map((r) => withGuide(r)))
       await tx.table('settings').add(DEFAULT_SETTINGS)
     })
   }

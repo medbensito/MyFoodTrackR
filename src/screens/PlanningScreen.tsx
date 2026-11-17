@@ -1,10 +1,13 @@
 import { useMemo, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
-import type { MealSlot, PlannedMeal, Settings } from '../types'
+import type { Macros, MealSlot, PlannedMeal, Settings } from '../types'
 import { db } from '../db/db'
 import { usePlannerRecipes } from '../db/usePlannerRecipes'
 import { useNav } from '../nav'
-import { isoWeek, targetsForDate, toISODate, trainingOn, weekDays } from '../lib/targets'
+import { isoWeek, toISODate, trainingOn, weekDays } from '../lib/targets'
+import { useWeekTargets } from '../db/useWeek'
+import { readjustDays } from '../db/readjust'
+import { deltaLabel } from '../lib/week'
 import { useOverrides } from '../db/useOverrides'
 import { DayTypeSheet } from '../components/DayTypeSheet'
 import { entryFromPlanned } from '../lib/journal'
@@ -51,8 +54,9 @@ export function PlanningScreen({ settings }: { settings: Settings }) {
   const planner = usePlannerRecipes()
   const meals = useLiveQuery(() => db.plannedMeals.where('date').anyOf(dates).toArray(), [dates.join()])
   const logs = useLiveQuery(() => db.logEntries.where('date').anyOf(dates).toArray(), [dates.join()])
+  const week = useWeekTargets(days[0], settings)
 
-  if (!planner || !meals || !logs || !overrides) return <div className="loading">Chargement…</div>
+  if (!planner || !meals || !logs || !overrides || !week) return <div className="loading">Chargement…</div>
   const { list: recipes, byId } = planner
 
   const mealsOf = (date: string) => meals.filter((m) => m.date === date)
@@ -64,7 +68,7 @@ export function PlanningScreen({ settings }: { settings: Settings }) {
     const dm = mealsOf(iso)
     if (dm.length === 0) return null
     const total = roundMacros(dayTotal(dm, byId))
-    const target = targetsForDate(parseISO(iso), settings, overrides)
+    const target = week.planTargetFor(iso)
     return { total, target, ok: withinTolerance(total, target), gap: gapLabel(total, target) }
   }
   const okDays = dates.filter((d) => dayStatus(d)?.ok).length
@@ -75,7 +79,7 @@ export function PlanningScreen({ settings }: { settings: Settings }) {
     setBusy(true)
     const pinned = meals.filter((m) => m.pinned)
     const seed = (Date.now() ^ Math.floor(Math.random() * 1e9)) >>> 0
-    const result = generateWeek({ dates, trainingDates, settings, recipes, pinned, postSlotFor: (d) => postTrainingSlot(d, settings) }, seed)
+    const result = generateWeek({ dates, trainingDates, settings, recipes, pinned, postSlotFor: (d) => postTrainingSlot(d, settings), targetFor: week.planTargetFor }, seed)
     await db.transaction('rw', db.plannedMeals, async () => {
       await db.plannedMeals.bulkDelete(meals.filter((m) => !m.pinned).map((m) => m.id))
       await db.plannedMeals.bulkPut(result.meals.filter((m) => !m.pinned).map((m) => ({ ...m, id: newId('pm') })))
@@ -87,7 +91,7 @@ export function PlanningScreen({ settings }: { settings: Settings }) {
   const saveMeal = async (meal: PlannedMeal) => {
     await db.plannedMeals.put(meal)
     const day = [...mealsOf(meal.date).filter((m) => m.id !== meal.id), meal]
-    const s = suggestAdjustment(day, meal.id, targetsForDate(parseISO(meal.date), settings, overrides), byId)
+    const s = suggestAdjustment(day, meal.id, week.planTargetFor(meal.date), byId)
     setSuggestion(s ? { date: meal.date, s } : null)
   }
 
@@ -122,7 +126,9 @@ export function PlanningScreen({ settings }: { settings: Settings }) {
   const selTraining = trainingDates.has(selected)
   const selMeals = mealsOf(selected)
   const selStatus = dayStatus(selected)
-  const selTarget = targetsForDate(selDate, settings, overrides)
+  const selTarget = week.planTargetFor(selected)
+  const selDelta = week.budget.delta.get(selected) ?? 0
+  const selExtra = week.extras.get(selected)
   const sug = suggestion?.date === selected ? suggestion.s : null
   const sugMeal = sug ? selMeals.find((m) => m.id === sug.mealId) : undefined
   const sheetMeal = sheet ? mealsOf(sheet.date).find((m) => m.slot === sheet.slot) ?? null : null
@@ -186,6 +192,8 @@ export function PlanningScreen({ settings }: { settings: Settings }) {
                 {overrides.has(selected) && <span className="tag">modifié</span>}
                 <ChevronIcon size={14} />
               </button>
+              {selExtra && <span className="tag tag--amber">{selExtra.label} {deltaLabel(selExtra.kcal)}</span>}
+              {selDelta < 0 && <span className="tag">Allégé {deltaLabel(selDelta)}</span>}
               {selStatus && (selStatus.ok
                 ? <span className="tag tag--lime">Dans la cible</span>
                 : <span className="tag tag--amber">Écart</span>)}
@@ -240,6 +248,14 @@ export function PlanningScreen({ settings }: { settings: Settings }) {
           </div>
         )}
 
+        <WeekBudgetCard week={week} today={todayISO} busy={busy}
+          canReadjust={dates.some((d) => d >= todayISO && dayStatus(d) && !dayStatus(d)!.ok && mealsOf(d).some((m) => !m.pinned && !eatenIds.has(m.id)))}
+          onReadjust={async () => {
+            setBusy(true)
+            await readjustDays(dates.filter((d) => d >= todayISO), settings, recipes, week)
+            setBusy(false)
+          }} />
+
         {hasPlan && (
           <>
             <div className="section-label">
@@ -282,7 +298,7 @@ export function PlanningScreen({ settings }: { settings: Settings }) {
           meal={sheetMeal}
           recipes={recipes}
           byId={byId}
-          slotTarget={slotTargets(trainingDates.has(sheet.date), settings, postTrainingSlot(sheet.date, settings))[sheet.slot]}
+          slotTarget={scaleSlot(slotTargets(trainingDates.has(sheet.date), settings, postTrainingSlot(sheet.date, settings))[sheet.slot], week.planTargetFor(sheet.date).kcal / week.baseFor(sheet.date).kcal)}
           slotLabel={slotNames(sheet.date, settings).label[sheet.slot]}
           onClose={() => setSheet(null)}
           onSetRecipe={(recipeId, factor) => saveMeal(
@@ -297,7 +313,7 @@ export function PlanningScreen({ settings }: { settings: Settings }) {
             await db.plannedMeals.delete(sheetMeal.id)
             setSheet(null)
             const rest = mealsOf(sheetMeal.date).filter((m) => m.id !== sheetMeal.id)
-            const s = rest.length ? suggestAdjustment(rest, sheetMeal.id, targetsForDate(parseISO(sheetMeal.date), settings, overrides), byId) : null
+            const s = rest.length ? suggestAdjustment(rest, sheetMeal.id, week.planTargetFor(sheetMeal.date), byId) : null
             setSuggestion(s ? { date: sheetMeal.date, s } : null)
           }}
           onOpenRecipe={(id) => { setSheet(null); nav.push({ type: 'recipe', id }) }}
@@ -306,5 +322,48 @@ export function PlanningScreen({ settings }: { settings: Settings }) {
         />
       )}
     </>
+  )
+}
+
+/** Une portion de créneau, à l'échelle d'une journée allégée. Les protéines ne bougent pas. */
+function scaleSlot(t: Macros, k: number): Macros {
+  if (!Number.isFinite(k) || k === 1) return t
+  return { kcal: t.kcal * k, protein: t.protein, carbs: t.carbs * k, fat: t.fat * k }
+}
+
+const DAY_SHORT = ['dim.', 'lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.']
+
+/** Résumé de la semaine quand des calories sont déplacées d'un jour à l'autre. */
+function WeekBudgetCard({ week, today, busy, canReadjust, onReadjust }: {
+  week: NonNullable<ReturnType<typeof useWeekTargets>>
+  today: string
+  busy: boolean
+  canReadjust: boolean
+  onReadjust: () => void
+}) {
+  const { budget } = week
+  const ahead = [...week.extras.values()].filter((e) => e.date >= today).sort((a, b) => a.date.localeCompare(b.date))
+  const moved = [...budget.delta.values()].some((v) => v !== 0)
+  if (!moved && ahead.length === 0) return null
+  const isCurrent = week.dates[0] <= today && today <= week.dates[6]
+  const parts: string[] = []
+  if (budget.debt > 0 && isCurrent) parts.push(`${budget.debt} kcal de dépassement à rattraper`)
+  for (const e of ahead) parts.push(`${e.label.toLowerCase()} ${DAY_SHORT[parseISO(e.date).getDay()]} ${deltaLabel(e.kcal)}`)
+  return (
+    <div className="week-budget">
+      <div className="week-budget-head">
+        <span className="caps">Semaine équilibrée</span>
+      </div>
+      <p>
+        {parts.length > 0 && <>{parts.join(' · ').replace(/^./, (c) => c.toUpperCase())}. </>}
+        {budget.cut > 0 && isCurrent
+          ? <>Les jours restants sont allégés de <strong>{budget.cut} kcal</strong>, protéines inchangées.</>
+          : !isCurrent && moved ? 'Cibles ajustées sur la semaine.' : null}
+        {budget.uncovered > 0 && isCurrent && <> {budget.uncovered} kcal laissées de côté : pas plus de 300 kcal en moins par jour.</>}
+      </p>
+      {canReadjust && budget.cut > 0 && isCurrent && (
+        <button className="btn btn--outline btn--sm" disabled={busy} onClick={onReadjust}>Réajuster les repas restants</button>
+      )}
+    </div>
   )
 }
