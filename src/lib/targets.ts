@@ -14,8 +14,17 @@ export function isTrainingDay(date: Date, trainingDays: number[]): boolean {
   return trainingDays.includes(date.getDay())
 }
 
-export function targetsForDate(date: Date, settings: Settings): Macros {
-  return isTrainingDay(date, settings.trainingDays) ? settings.targets.training : settings.targets.rest
+/** Exceptions ponctuelles : date ISO → séance (true) ou repos (false). */
+export type Overrides = Map<string, boolean>
+
+/** Jour d'entraînement, en tenant compte d'une séance sautée ou ajoutée ce jour-là. */
+export function trainingOn(date: Date, settings: Pick<Settings, 'trainingDays'>, overrides?: Overrides): boolean {
+  const o = overrides?.get(toISODate(date))
+  return o ?? isTrainingDay(date, settings.trainingDays)
+}
+
+export function targetsForDate(date: Date, settings: Settings, overrides?: Overrides): Macros {
+  return trainingOn(date, settings, overrides) ? settings.targets.training : settings.targets.rest
 }
 
 export const DEFAULT_SETTINGS: Settings = {

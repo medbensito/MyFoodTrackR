@@ -4,7 +4,9 @@ import type { MealSlot, PlannedMeal, Settings } from '../types'
 import { db } from '../db/db'
 import { usePlannerRecipes } from '../db/usePlannerRecipes'
 import { useNav } from '../nav'
-import { isoWeek, isTrainingDay, targetsForDate, toISODate, weekDays } from '../lib/targets'
+import { isoWeek, targetsForDate, toISODate, trainingOn, weekDays } from '../lib/targets'
+import { useOverrides } from '../db/useOverrides'
+import { DayTypeSheet } from '../components/DayTypeSheet'
 import { entryFromPlanned } from '../lib/journal'
 import { fmtFactor, newId, roundMacros, scaleMacros, SLOT_ORDER, SLOT_SHORT } from '../lib/nutrition'
 import {
@@ -32,9 +34,10 @@ export function PlanningScreen({ settings }: { settings: Settings }) {
     return weekDays(d)
   }, [weekOffset])
   const dates = useMemo(() => days.map(toISODate), [days])
+  const overrides = useOverrides(dates)
   const trainingDates = useMemo(
-    () => new Set(days.filter((d) => isTrainingDay(d, settings.trainingDays)).map(toISODate)),
-    [days, settings.trainingDays],
+    () => new Set(days.filter((d) => trainingOn(d, settings, overrides)).map(toISODate)),
+    [days, settings, overrides],
   )
 
   const [picked, setPicked] = useState<string | null>(null)
@@ -42,12 +45,13 @@ export function PlanningScreen({ settings }: { settings: Settings }) {
   const [sheet, setSheet] = useState<{ date: string; slot: MealSlot } | null>(null)
   const [suggestion, setSuggestion] = useState<{ date: string; s: Suggestion } | null>(null)
   const [busy, setBusy] = useState(false)
+  const [dayTypeFor, setDayTypeFor] = useState<string | null>(null)
 
   const planner = usePlannerRecipes()
   const meals = useLiveQuery(() => db.plannedMeals.where('date').anyOf(dates).toArray(), [dates.join()])
   const logs = useLiveQuery(() => db.logEntries.where('date').anyOf(dates).toArray(), [dates.join()])
 
-  if (!planner || !meals || !logs) return <div className="loading">Chargement…</div>
+  if (!planner || !meals || !logs || !overrides) return <div className="loading">Chargement…</div>
   const { list: recipes, byId } = planner
 
   const mealsOf = (date: string) => meals.filter((m) => m.date === date)
@@ -59,7 +63,7 @@ export function PlanningScreen({ settings }: { settings: Settings }) {
     const dm = mealsOf(iso)
     if (dm.length === 0) return null
     const total = roundMacros(dayTotal(dm, byId))
-    const target = targetsForDate(parseISO(iso), settings)
+    const target = targetsForDate(parseISO(iso), settings, overrides)
     return { total, target, ok: withinTolerance(total, target), gap: gapLabel(total, target) }
   }
   const okDays = dates.filter((d) => dayStatus(d)?.ok).length
@@ -82,7 +86,7 @@ export function PlanningScreen({ settings }: { settings: Settings }) {
   const saveMeal = async (meal: PlannedMeal) => {
     await db.plannedMeals.put(meal)
     const day = [...mealsOf(meal.date).filter((m) => m.id !== meal.id), meal]
-    const s = suggestAdjustment(day, meal.id, targetsForDate(parseISO(meal.date), settings), byId)
+    const s = suggestAdjustment(day, meal.id, targetsForDate(parseISO(meal.date), settings, overrides), byId)
     setSuggestion(s ? { date: meal.date, s } : null)
   }
 
@@ -112,7 +116,7 @@ export function PlanningScreen({ settings }: { settings: Settings }) {
   const selTraining = trainingDates.has(selected)
   const selMeals = mealsOf(selected)
   const selStatus = dayStatus(selected)
-  const selTarget = targetsForDate(selDate, settings)
+  const selTarget = targetsForDate(selDate, settings, overrides)
   const sug = suggestion?.date === selected ? suggestion.s : null
   const sugMeal = sug ? selMeals.find((m) => m.id === sug.mealId) : undefined
   const sheetMeal = sheet ? mealsOf(sheet.date).find((m) => m.slot === sheet.slot) ?? null : null
@@ -170,7 +174,11 @@ export function PlanningScreen({ settings }: { settings: Settings }) {
         ) : (
           <div className="day-card">
             <div className="day-card-head">
-              <span className="caps" style={{ fontSize: 12, letterSpacing: '0.12em' }}>{LONG.format(selDate)} · {selTraining ? 'Entraînement' : 'Repos'}</span>
+              <button className="day-type" onClick={() => setDayTypeFor(selected)} aria-label={`${LONG.format(selDate)}, ${selTraining ? 'entraînement' : 'repos'} : changer`}>
+                {LONG.format(selDate)} · <span className={selTraining ? 'lime' : undefined}>{selTraining ? 'Entraînement' : 'Repos'}</span>
+                {overrides.has(selected) && <span className="tag">modifié</span>}
+                <ChevronIcon size={14} />
+              </button>
               {selStatus && (selStatus.ok
                 ? <span className="tag tag--lime">Dans la cible</span>
                 : <span className="tag tag--amber">Écart</span>)}
@@ -255,6 +263,10 @@ export function PlanningScreen({ settings }: { settings: Settings }) {
         )}
       </section>
 
+      {dayTypeFor && (
+        <DayTypeSheet date={dayTypeFor} training={trainingDates.has(dayTypeFor)} settings={settings} onClose={() => setDayTypeFor(null)} />
+      )}
+
       {sheet && (
         <MealSheet
           key={`${sheet.date}-${sheet.slot}`}
@@ -277,7 +289,7 @@ export function PlanningScreen({ settings }: { settings: Settings }) {
             await db.plannedMeals.delete(sheetMeal.id)
             setSheet(null)
             const rest = mealsOf(sheetMeal.date).filter((m) => m.id !== sheetMeal.id)
-            const s = rest.length ? suggestAdjustment(rest, sheetMeal.id, targetsForDate(parseISO(sheetMeal.date), settings), byId) : null
+            const s = rest.length ? suggestAdjustment(rest, sheetMeal.id, targetsForDate(parseISO(sheetMeal.date), settings, overrides), byId) : null
             setSuggestion(s ? { date: sheetMeal.date, s } : null)
           }}
           onOpenRecipe={(id) => { setSheet(null); nav.push({ type: 'recipe', id }) }}

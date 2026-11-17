@@ -4,7 +4,9 @@ import type { Macros, Settings } from '../types'
 import { db } from '../db/db'
 import { useFoods } from '../db/hooks'
 import { usePlannerRecipes } from '../db/usePlannerRecipes'
-import { isTrainingDay, targetsForDate, toISODate } from '../lib/targets'
+import { targetsForDate, toISODate, trainingOn } from '../lib/targets'
+import { useOverrides } from '../db/useOverrides'
+import { DayTypeSheet } from '../components/DayTypeSheet'
 import { fmtFactor, roundMacros, scaleMacros, SLOT_LABEL, SLOT_ORDER, SLOT_SHORT, SLOT_THE } from '../lib/nutrition'
 import { dayTotal } from '../lib/planner'
 import { entryFromPlanned, totalOf } from '../lib/journal'
@@ -58,6 +60,7 @@ function CompareCol({ label, m }: { label: string; m: Macros }) {
 export function TrackerScreen({ settings }: { settings: Settings }) {
   const [offset, setOffset] = useState(0)
   const [adding, setAdding] = useState(false)
+  const [dayType, setDayType] = useState(false)
   const day = useMemo(() => { const d = new Date(); d.setDate(d.getDate() + offset); return d }, [offset])
   const iso = toISODate(day)
 
@@ -65,11 +68,12 @@ export function TrackerScreen({ settings }: { settings: Settings }) {
   const foods = useFoods()
   const planned = useLiveQuery(() => db.plannedMeals.where('date').equals(iso).toArray(), [iso])
   const entries = useLiveQuery(() => db.logEntries.where('date').equals(iso).toArray(), [iso])
+  const overrides = useOverrides([iso])
 
-  if (!planner || !foods || !planned || !entries) return <div className="loading">Chargement…</div>
+  if (!planner || !foods || !planned || !entries || !overrides) return <div className="loading">Chargement…</div>
 
-  const t = targetsForDate(day, settings)
-  const training = isTrainingDay(day, settings.trainingDays)
+  const t = targetsForDate(day, settings, overrides)
+  const training = trainingOn(day, settings, overrides)
   const consumed = roundMacros(totalOf(entries))
   const plannedTotal = roundMacros(dayTotal(planned, planner.byId))
   const plannedSorted = [...planned].sort((a, b) => SLOT_ORDER.indexOf(a.slot) - SLOT_ORDER.indexOf(b.slot))
@@ -105,7 +109,11 @@ export function TrackerScreen({ settings }: { settings: Settings }) {
     <>
       <ScreenHeader
         title={offset === 0 ? 'Aujourd\'hui' : TITLE_FMT.format(day)}
-        subtitle={<>{subtitle}{offset !== 0 && <button className="text-link" onClick={() => setOffset(0)}>· Aujourd'hui</button>}</>}
+        subtitle={<>
+          {subtitle}
+          <button className="text-link" onClick={() => setDayType(true)}>· Changer</button>
+          {offset !== 0 && <button className="text-link" onClick={() => setOffset(0)}>· Aujourd'hui</button>}
+        </>}
         dot={training}
         action={<>
           <SquareButton label="Jour précédent" onClick={() => setOffset((o) => o - 1)}><BackIcon /></SquareButton>
@@ -215,6 +223,8 @@ export function TrackerScreen({ settings }: { settings: Settings }) {
           </>
         )}
       </section>
+
+      {dayType && <DayTypeSheet date={iso} training={training} settings={settings} onClose={() => setDayType(false)} />}
 
       {adding && (
         <AddEntrySheet

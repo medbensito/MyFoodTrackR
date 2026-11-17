@@ -353,3 +353,5 @@ input, select, textarea { font: inherit; }
 .shop-row--on .shop-qty { color: var(--muted); }
 .shop-qty { font-family: var(--display); font-weight: 700; font-size: 22px; text-align: right; flex-shrink: 0; white-space: nowrap; }
 .shop-qty small { font-size: 15px; color: var(--muted); font-weight: 600; }
+.day-type { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0; border: 0; background: none; color: var(--muted); font-size: 12px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; text-align: left; }
+.day-type .tag { letter-spacing: 0.06em; }

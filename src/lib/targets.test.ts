@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { isoWeek, buildMacros, computeCarbs, DEFAULT_SETTINGS, isTrainingDay, startOfWeek, targetsForDate, toISODate, weekDays } from './targets'
+import { isoWeek, trainingOn, buildMacros, computeCarbs, DEFAULT_SETTINGS, isTrainingDay, startOfWeek, targetsForDate, toISODate, weekDays } from './targets'
 
 describe('computeCarbs', () => {
   it('calcule les glucides restants', () => {
@@ -43,5 +43,22 @@ describe('isoWeek', () => {
     expect(isoWeek(new Date(2026, 10, 17))).toBe(47)
     expect(isoWeek(new Date(2026, 0, 1))).toBe(1)
     expect(isoWeek(new Date(2027, 0, 1))).toBe(53)
+  })
+})
+
+describe('exceptions de séance', () => {
+  const mardi = new Date(2026, 10, 17)
+  const lundi = new Date(2026, 10, 16)
+  it('une séance sautée passe le jour en repos', () => {
+    const o = new Map([['2026-11-17', false]])
+    expect(trainingOn(mardi, DEFAULT_SETTINGS, o)).toBe(false)
+    expect(targetsForDate(mardi, DEFAULT_SETTINGS, o).kcal).toBe(2200)
+  })
+  it('une séance ajoutée passe le jour en entraînement', () => {
+    const o = new Map([['2026-11-16', true]])
+    expect(targetsForDate(lundi, DEFAULT_SETTINGS, o).kcal).toBe(2400)
+  })
+  it('sans exception, suit le rythme habituel', () => {
+    expect(trainingOn(mardi, DEFAULT_SETTINGS, new Map())).toBe(true)
   })
 })
