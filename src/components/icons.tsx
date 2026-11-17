@@ -141,3 +141,18 @@ export const TargetsIcon = ({ size = 22 }: P) => (
 export const DatabaseIcon = ({ size = 22 }: P) => (
   <svg {...base(size)}><ellipse cx="12" cy="6" rx="7" ry="2.8" /><path d="M5 6v12c0 1.5 3.1 2.8 7 2.8s7-1.3 7-2.8V6M5 12c0 1.5 3.1 2.8 7 2.8s7-1.3 7-2.8" /></svg>
 )
+
+export const PinIcon = ({ size = 16, filled }: P) => (
+  <svg {...base(size)}>
+    <path d="M9 3h6l-1 6 3 3v2H7v-2l3-3z" fill={filled ? 'currentColor' : 'none'} />
+    <path d="M12 14v7" />
+  </svg>
+)
+
+export const RefreshIcon = ({ size = 18 }: P) => (
+  <svg {...base(size)}><path d="M20 11a8 8 0 0 0-14.3-4.9L4 8M4 4v4h4M4 13a8 8 0 0 0 14.3 4.9L20 16M20 20v-4h-4" /></svg>
+)
+
+export const SparkIcon = ({ size = 18 }: P) => (
+  <svg {...base(size)}><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8zM19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z" /></svg>
+)

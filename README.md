@@ -2,7 +2,16 @@
 
 PWA personnelle de nutrition : planning de la semaine, recettes avec macros, tracker de protéines. Tout est stocké localement sur l'appareil (IndexedDB).
 
-## État : jalon M1 — Aliments et recettes
+## État : jalon M2 — Moteur de planning
+
+- `src/lib/planner.ts` : fonction pure `generateWeek(input, seed)`, testée
+  - cibles par créneau (25 / 35 / 30 / 10 % des kcal), supplément d'entraînement sur le repas qui suit la séance
+  - portions de ×0,5 à ×2, score pondéré (manque de protéines ×3, kcal ×1, glucides et lipides ×0,5)
+  - variété : 2 fois max par créneau, jamais deux jours de suite, 3 fois max dans la semaine
+  - repas épinglés conservés, correction de fin de journée, proposition d'ajustement après modification
+- Onglet Planning : générer / régénérer, navigation entre semaines, total et écart par jour, feuille repas (portion, recette, épingler, retirer)
+
+### Jalon M1 — Aliments et recettes
 
 - Base d'aliments : recherche, filtres, édition, marquer comme vérifié, ajout d'aliments perso, suppression bloquée si utilisé dans une recette
 - Recettes : liste filtrable par créneau, recherche, fiche détaillée, éditeur avec macros en direct
